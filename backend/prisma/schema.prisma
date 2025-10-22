@@ -1,0 +1,81 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  POSTER
+  HELPER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum VerificationType {
+  EMAIL
+  PHONE
+  ID_DOCUMENT
+}
+
+// Models
+model User {
+  userId           String        @id @default(uuid())
+  email            String        @unique
+  passwordHash     String
+  name             String?
+  phoneNumber      String?
+  accountStatus    AccountStatus @default(ACTIVE)
+  isVerified       Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Relations
+  verifications    Verification[]
+  passwordResets   PasswordReset[]
+
+  @@map("users")
+}
+
+model Verification {
+  verificationId   String           @id @default(uuid())
+  userId           String
+  verificationType VerificationType
+  token            String           @unique
+  expiresAt        DateTime
+  isUsed           Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+
+  // Relations
+  user             User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("verifications")
+}
+
+model PasswordReset {
+  resetId          String           @id @default(uuid())
+  userId           String
+  token            String           @unique
+  expiresAt        DateTime
+  isUsed           Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+
+  // Relations
+  user             User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_resets")
+}
