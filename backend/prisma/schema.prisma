@@ -28,6 +28,30 @@ enum VerificationType {
   ID_DOCUMENT
 }
 
+enum TaskStatus {
+  OPEN
+  IN_BIDDING
+  ASSIGNED
+  IN_PROGRESS
+  AWAITING_CONFIRMATION
+  DISPUTED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskCategory {
+  HOME_REPAIR
+  CLEANING
+  MOVING
+  DELIVERY
+  ASSEMBLY
+  YARD_WORK
+  PET_CARE
+  TECH_SUPPORT
+  TUTORING
+  OTHER
+}
+
 // Models
 model User {
   userId           String        @id @default(uuid())
@@ -40,9 +64,13 @@ model User {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  // Relations
+  // Auth Relations
   verifications    Verification[]
   passwordResets   PasswordReset[]
+
+  // Task Relations
+  postedTasks      Task[]        @relation("PostedTasks")
+  assignedTasks    Task[]        @relation("AssignedTasks")
 
   @@map("users")
 }
@@ -78,4 +106,74 @@ model PasswordReset {
   @@index([userId])
   @@index([token])
   @@map("password_resets")
+}
+
+model Task {
+  taskId          String       @id @default(uuid())
+  title           String
+  description     String       @db.Text
+  category        TaskCategory
+  budget          Decimal      @db.Decimal(10, 2)
+  budgetMin       Decimal?     @db.Decimal(10, 2)
+  budgetMax       Decimal?     @db.Decimal(10, 2)
+  status          TaskStatus   @default(OPEN)
+
+  // Location
+  location        Location?    @relation(fields: [locationId], references: [locationId])
+  locationId      String?
+  addressMasked   String?      // Approximate location for public view
+
+  // Timing
+  taskDate        DateTime?    // When task should be done
+  estimatedHours  Int?
+
+  // Poster
+  posterId        String
+  poster          User         @relation("PostedTasks", fields: [posterId], references: [userId], onDelete: Cascade)
+
+  // Assigned Helper
+  assignedHelperId String?
+  assignedHelper   User?       @relation("AssignedTasks", fields: [assignedHelperId], references: [userId], onDelete: Cascade)
+
+  // Photos
+  photos          TaskPhoto[]
+
+  // Timestamps
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([posterId])
+  @@index([status])
+  @@index([category])
+  @@index([taskDate])
+  @@map("tasks")
+}
+
+model TaskPhoto {
+  photoId         String       @id @default(uuid())
+  taskId          String
+  task            Task         @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  photoUrl        String
+  thumbnailUrl    String?
+  uploadedAt      DateTime     @default(now())
+
+  @@index([taskId])
+  @@map("task_photos")
+}
+
+model Location {
+  locationId      String       @id @default(uuid())
+  latitude        Decimal      @db.Decimal(10, 8)
+  longitude       Decimal      @db.Decimal(11, 8)
+  address         String
+  city            String?
+  state           String?
+  zipCode         String?
+  country         String       @default("US")
+
+  // Relations
+  tasks           Task[]
+
+  @@index([latitude, longitude])
+  @@map("locations")
 }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Task, CreateTaskData, UpdateTaskData } from '@/types/task.types';
 import { AuthResponse, SignupData, LoginData, ForgotPasswordData, ResetPasswordData } from '@/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -52,4 +53,38 @@ export const authAPI = {
   },
 };
 
+// Task API
+export const taskAPI = {
+  createTask: async (data: CreateTaskData): Promise<{ message: string; task: Task }> => {
+    const response = await api.post('/tasks', data);
+    return response.data;
+  },
+
+  getMyTasks: async (filters?: { status?: string; category?: string }): Promise<{ tasks: Task[] }> => {
+    const response = await api.get('/tasks/my-tasks', { params: filters });
+    return response.data;
+  },
+
+  getTaskById: async (taskId: string): Promise<{ task: Task }> => {
+    const response = await api.get(`/tasks/${taskId}`);
+    return response.data;
+  },
+
+  updateTask: async (taskId: string, data: UpdateTaskData): Promise<{ message: string; task: Task }> => {
+    const response = await api.put(`/tasks/${taskId}`, data);
+    return response.data;
+  },
+
+  cancelTask: async (taskId: string): Promise<{ message: string; task: Task }> => {
+    const response = await api.patch(`/tasks/${taskId}/cancel`);
+    return response.data;
+  },
+
+  deleteTask: async (taskId: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/tasks/${taskId}`);
+    return response.data;
+  },
+};
+
 export default api;
+ 
