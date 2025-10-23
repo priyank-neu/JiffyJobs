@@ -3,9 +3,12 @@ import { Container, Typography, Box, Paper, Alert } from '@mui/material';
 import { useAuth } from '@/contexts/AuthContext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@mui/material';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -62,19 +65,34 @@ const Dashboard: React.FC = () => {
       </Paper>
 
       <Paper sx={{ p: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Getting Started
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-          🎉 Your account has been created successfully!
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          Epic 1: User Authentication - Complete ✅
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-          Next up: Task posting, bidding, and more features coming soon...
-        </Typography>
-      </Paper>
+  <Typography variant="h6" gutterBottom>
+    Getting Started
+  </Typography>
+  <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+    🎉 Your account has been created successfully!
+  </Typography>
+  <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+    Epic 1: User Authentication - Complete ✅
+  </Typography>
+  <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+    Epic 2: Task Posting - In Progress 🚧
+  </Typography>
+
+  <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+    <Button
+      variant="contained"
+      onClick={() => navigate('/tasks/create')}
+    >
+      Post a Task
+    </Button>
+    <Button
+      variant="outlined"
+      onClick={() => navigate('/my-tasks')}
+    >
+      View My Tasks
+    </Button>
+  </Box>
+</Paper>
     </Container>
   );
 };
