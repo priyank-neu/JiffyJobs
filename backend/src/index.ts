@@ -14,8 +14,10 @@ app.use(cors({
   origin: config.FRONTEND_URL,
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Increase body size limit for photo uploads (base64)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser(config.COOKIE_SECRET));
 
 // Routes
@@ -25,7 +27,7 @@ app.use('/api', routes);
 app.use(errorHandler);
 
 // Start server
-const PORT = config.PORT || 5000;
+const PORT = config.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

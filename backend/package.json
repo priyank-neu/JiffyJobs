@@ -3,20 +3,22 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "dev": "nodemon",
-  "build": "tsc",
-  "start": "node dist/index.js",
-  "prisma:generate": "dotenv -e .env -- prisma generate",
-  "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
-  "prisma:studio": "dotenv -e .env -- prisma studio",
-  "lint": "eslint . --ext .ts",
-  "format": "prettier --write \"src/**/*.ts\""
-},
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prisma:generate": "dotenv -e .env -- prisma generate",
+    "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
+    "prisma:studio": "dotenv -e .env -- prisma studio",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.914.0",
+    "@aws-sdk/s3-request-presigner": "^3.914.0",
     "@prisma/client": "^6.18.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
@@ -48,4 +50,3 @@
     "typescript": "^5.9.3"
   }
 }
- 

@@ -12,6 +12,8 @@ import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import CreateTask from './pages/CreateTask';
 import MyTasks from './pages/MyTasks';
+import EditTask from './pages/EditTask';
+import TaskDetail from './pages/TaskDetail';
 
 function App() {
   return (
@@ -50,6 +52,22 @@ function App() {
                 }
               />
               <Route path="*" element={<Navigate to="/" replace />} />
+              <Route
+  path="/tasks/:taskId"
+  element={
+    <ProtectedRoute>
+      <TaskDetail />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/tasks/:taskId/edit"
+  element={
+    <ProtectedRoute>
+      <EditTask />
+    </ProtectedRoute>
+  }
+/>
             </Routes>
           </Layout>
         </AuthProvider>

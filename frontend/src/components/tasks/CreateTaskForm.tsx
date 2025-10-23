@@ -8,8 +8,13 @@ import {
   Paper,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import dayjs, { Dayjs } from 'dayjs';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
+import PhotoUpload from './PhotoUpload';
 import { taskAPI } from '@/services/api.service';
 import { TaskCategory } from '@/types/task.types';
 
@@ -36,6 +41,8 @@ const CreateTaskForm: React.FC = () => {
     budgetMax: '',
     estimatedHours: '',
   });
+  const [taskDate, setTaskDate] = useState<Dayjs | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -77,6 +84,8 @@ const CreateTaskForm: React.FC = () => {
         budgetMin,
         budgetMax,
         estimatedHours: formData.estimatedHours ? parseInt(formData.estimatedHours) : undefined,
+        taskDate: taskDate ? taskDate.toDate() : undefined,
+        photos: photos.length > 0 ? photos : undefined,
       });
 
       navigate('/my-tasks');
@@ -180,6 +189,27 @@ const CreateTaskForm: React.FC = () => {
             onChange={handleChange}
             inputProps={{ min: 1, max: 24 }}
             helperText="How long do you think this task will take?"
+          />
+
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Task Date & Time"
+              value={taskDate}
+              onChange={(newValue) => setTaskDate(newValue)}
+              minDateTime={dayjs()}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  helperText: 'When do you need this task completed?'
+                }
+              }}
+            />
+          </LocalizationProvider>
+
+          <PhotoUpload
+            photos={photos}
+            onPhotosChange={setPhotos}
+            maxPhotos={5}
           />
 
           <Box sx={{ display: 'flex', gap: 2, pt: 2 }}>

@@ -27,7 +27,7 @@ export const createTask = async (posterId: string, taskData: CreateTaskDTO) => {
     );
   }
 
-  // Create task
+  // Create task with photos in one transaction
   const task = await prisma.task.create({
     data: {
       title: taskData.title,
@@ -42,6 +42,11 @@ export const createTask = async (posterId: string, taskData: CreateTaskDTO) => {
       locationId,
       addressMasked,
       status: TaskStatus.OPEN,
+      photos: taskData.photos && taskData.photos.length > 0 ? {
+        create: taskData.photos.map(photoUrl => ({
+          photoUrl,
+        }))
+      } : undefined,
     },
     include: {
       poster: {
@@ -55,20 +60,6 @@ export const createTask = async (posterId: string, taskData: CreateTaskDTO) => {
       photos: true,
     },
   });
-
-  // Add photos if provided
-  if (taskData.photos && taskData.photos.length > 0) {
-    await Promise.all(
-      taskData.photos.map((photoUrl) =>
-        prisma.taskPhoto.create({
-          data: {
-            taskId: task.taskId,
-            photoUrl,
-          },
-        })
-      )
-    );
-  }
 
   return task;
 };

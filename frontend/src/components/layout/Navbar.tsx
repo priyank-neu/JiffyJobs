@@ -28,21 +28,27 @@ const Navbar: React.FC = () => {
           </Typography>
 
           {isAuthenticated ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <PersonIcon fontSize="small" />
-                <Typography variant="body2">
-                  {user?.name || user?.email}
-                </Typography>
-              </Box>
-              <Button
-                color="inherit"
-                startIcon={<LogoutIcon />}
-                onClick={handleLogout}
-              >
-                Logout
-              </Button>
-            </Box>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Button color="inherit" onClick={() => navigate('/dashboard')}>
+      Dashboard
+    </Button>
+    <Button color="inherit" onClick={() => navigate('/my-tasks')}>
+      My Tasks
+    </Button>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <PersonIcon fontSize="small" />
+      <Typography variant="body2">
+        {user?.name || user?.email}
+      </Typography>
+    </Box>
+    <Button
+      color="inherit"
+      startIcon={<LogoutIcon />}
+      onClick={handleLogout}
+    >
+      Logout
+    </Button>
+  </Box>
           ) : (
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button color="inherit" onClick={() => navigate('/login')}>

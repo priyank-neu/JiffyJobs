@@ -52,7 +52,7 @@ const MyTasks: React.FC = () => {
 
     try {
       await taskAPI.cancelTask(taskId);
-      fetchTasks(); // Refresh list
+      fetchTasks();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Failed to cancel task');
     }
@@ -81,85 +81,129 @@ const MyTasks: React.FC = () => {
         </Button>
       </Box>
 
-     {tasks.length === 0 ? (
-  <Paper sx={{ p: 6, textAlign: 'center' }}>
-    <Typography variant="h6" color="text.secondary" gutterBottom>
-      No tasks yet
-    </Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-      Create your first task to get started!
-    </Typography>
-    <Button
-      variant="contained"
-      startIcon={<AddIcon />}
-      onClick={() => navigate('/tasks/create')}
-    >
-      Post Your First Task
-    </Button>
-  </Paper>
-) : (
-  <Stack spacing={3}>
-    {tasks.map((task) => (
-      <Paper key={task.taskId} sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" fontWeight="bold">
-                {task.title}
-              </Typography>
-              <Chip
-                label={task.status}
-                color={statusColors[task.status]}
-                size="small"
-              />
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {task.description}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Chip label={task.category.replace('_', ' ')} size="small" variant="outlined" />
-              <Chip label={`$${task.budget}`} size="small" color="primary" />
-              {task.estimatedHours && (
-                <Chip label={`${task.estimatedHours}h`} size="small" variant="outlined" />
-              )}
-              {task.addressMasked && (
-                <Chip label={task.addressMasked} size="small" variant="outlined" />
-              )}
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {task.status === TaskStatus.OPEN && (
-              <>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => navigate(`/tasks/${task.taskId}/edit`)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="error"
-                  onClick={() => handleCancelTask(task.taskId)}
-                >
-                  Cancel
-                </Button>
-              </>
-            )}
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => navigate(`/tasks/${task.taskId}`)}
-            >
-              View Details
-            </Button>
-          </Box>
-        </Box>
-      </Paper>
-    ))}
-  </Stack>
-)}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {tasks.length === 0 ? (
+        <Paper sx={{ p: 6, textAlign: 'center' }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No tasks yet
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Create your first task to get started!
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/tasks/create')}
+          >
+            Post Your First Task
+          </Button>
+        </Paper>
+      ) : (
+        <Stack spacing={3}>
+          {tasks.map((task) => (
+            <Paper key={task.taskId} sx={{ p: 3, '&:hover': { boxShadow: 4 } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="h6" fontWeight="bold">
+                      {task.title}
+                    </Typography>
+                    <Chip
+                      label={task.status}
+                      color={statusColors[task.status]}
+                      size="small"
+                    />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {task.description}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Chip 
+                      label={task.category.replace('_', ' ')} 
+                      size="small" 
+                      variant="outlined" 
+                    />
+                    <Chip 
+                      label={`$${task.budget}`} 
+                      size="small" 
+                      color="primary" 
+                    />
+                    {task.budgetMin && task.budgetMax && (
+                      <Chip 
+                        label={`Range: $${task.budgetMin}-$${task.budgetMax}`} 
+                        size="small" 
+                        variant="outlined" 
+                      />
+                    )}
+                    {task.estimatedHours && (
+                      <Chip 
+                        label={`${task.estimatedHours}h`} 
+                        size="small" 
+                        variant="outlined" 
+                      />
+                    )}
+                    {task.addressMasked && (
+                      <Chip 
+                        label={task.addressMasked} 
+                        size="small" 
+                        variant="outlined" 
+                      />
+                    )}
+                    {task.photos && task.photos.length > 0 && (
+                      <Chip 
+                        label={`${task.photos.length} photo${task.photos.length > 1 ? 's' : ''}`} 
+                        size="small" 
+                        variant="outlined" 
+                        color="secondary"
+                      />
+                    )}
+                    {task.taskDate && (
+                      <Chip 
+                        label={new Date(task.taskDate).toLocaleDateString()} 
+                        size="small" 
+                        variant="outlined" 
+                      />
+                    )}
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+                  {task.status === TaskStatus.OPEN && (
+                    <>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate(`/tasks/${task.taskId}/edit`)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleCancelTask(task.taskId)}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => navigate(`/tasks/${task.taskId}`)}
+                  >
+                    View
+                  </Button>
+                </Box>
+              </Box>
+            </Paper>
+          ))}
+        </Stack>
+      )}
     </Container>
   );
 };
