@@ -14,6 +14,8 @@ import CreateTask from './pages/CreateTask';
 import MyTasks from './pages/MyTasks';
 import EditTask from './pages/EditTask';
 import TaskDetail from './pages/TaskDetail';
+import TaskDetailReadOnly from './pages/TaskDetailReadOnly';
+import TaskDiscovery from './pages/TaskDiscovery';
 
 function App() {
   return (
@@ -48,6 +50,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MyTasks />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/discover"
+                element={
+                  <ProtectedRoute>
+                    <TaskDiscovery />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/task/:taskId"
+                element={
+                  <ProtectedRoute>
+                    <TaskDetailReadOnly />
                   </ProtectedRoute>
                 }
               />

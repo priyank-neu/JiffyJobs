@@ -63,6 +63,14 @@ export interface Task {
   photos?: TaskPhoto[];
 }
 
+export interface TaskWithDistance extends Task {
+  distance?: number;
+  skillMatch?: {
+    isGoodMatch: boolean;
+    matchingSkills: string[];
+  };
+}
+
 export interface TaskPhoto {
   photoId: string;
   taskId: string;
@@ -100,4 +108,12 @@ export interface UpdateTaskData {
   budgetMax?: number;
   taskDate?: Date;
   estimatedHours?: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+    city: string;
+    state: string;
+    zipCode?: string;
+  };
 }

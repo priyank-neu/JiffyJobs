@@ -70,6 +70,12 @@ export const taskAPI = {
     return response.data;
   },
 
+  // Public method for discovery (no authentication required)
+  getTaskByIdPublic: async (taskId: string): Promise<{ task: Task }> => {
+    const response = await api.get(`/tasks/public/${taskId}`);
+    return response.data;
+  },
+
   updateTask: async (taskId: string, data: UpdateTaskData): Promise<{ message: string; task: Task }> => {
     const response = await api.put(`/tasks/${taskId}`, data);
     return response.data;
@@ -82,6 +88,48 @@ export const taskAPI = {
 
   deleteTask: async (taskId: string): Promise<{ message: string }> => {
     const response = await api.delete(`/tasks/${taskId}`);
+    return response.data;
+  },
+};
+
+// Discovery API
+export const discoveryAPI = {
+  discoverTasks: async (filters: {
+    latitude: number;
+    longitude: number;
+    radius?: number;
+    category?: string;
+    minBudget?: number;
+    maxBudget?: number;
+    startDate?: string;
+    endDate?: string;
+    minHours?: number;
+    maxHours?: number;
+    searchText?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: 'proximity' | 'soonest' | 'budget' | 'newest' | 'oldest' | 'title';
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{
+    message: string;
+    tasks: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> => {
+    const response = await api.get('/discover/tasks', { params: filters });
+    return response.data;
+  },
+
+  getNearbyTasksCount: async (latitude: number, longitude: number, radius?: number): Promise<{ count: number }> => {
+    const response = await api.get('/discover/tasks/count', { 
+      params: { latitude, longitude, radius } 
+    });
     return response.data;
   },
 };

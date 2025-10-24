@@ -32,6 +32,9 @@ const Navbar: React.FC = () => {
     <Button color="inherit" onClick={() => navigate('/dashboard')}>
       Dashboard
     </Button>
+    <Button color="inherit" onClick={() => navigate('/discover')}>
+      Discover Tasks
+    </Button>
     <Button color="inherit" onClick={() => navigate('/my-tasks')}>
       My Tasks
     </Button>

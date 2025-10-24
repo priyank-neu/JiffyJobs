@@ -1,33 +1,33 @@
 // This is your Prisma schema file
-
+ 
 generator client {
   provider = "prisma-client-js"
 }
-
+ 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
+ 
 // Enums
 enum UserRole {
   POSTER
   HELPER
   ADMIN
 }
-
+ 
 enum AccountStatus {
   ACTIVE
   SUSPENDED
   DELETED
 }
-
+ 
 enum VerificationType {
   EMAIL
   PHONE
   ID_DOCUMENT
 }
-
+ 
 enum TaskStatus {
   OPEN
   IN_BIDDING
@@ -38,7 +38,7 @@ enum TaskStatus {
   COMPLETED
   CANCELLED
 }
-
+ 
 enum TaskCategory {
   HOME_REPAIR
   CLEANING
@@ -51,7 +51,14 @@ enum TaskCategory {
   TUTORING
   OTHER
 }
-
+ 
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+ 
 // Models
 model User {
   userId           String        @id @default(uuid())
@@ -63,18 +70,21 @@ model User {
   isVerified       Boolean       @default(false)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
-
+ 
   // Auth Relations
   verifications    Verification[]
   passwordResets   PasswordReset[]
-
+ 
   // Task Relations
   postedTasks      Task[]        @relation("PostedTasks")
   assignedTasks    Task[]        @relation("AssignedTasks")
-
+ 
+  // Skill Relations
+  userSkills       UserSkill[]
+ 
   @@map("users")
 }
-
+ 
 model Verification {
   verificationId   String           @id @default(uuid())
   userId           String
@@ -83,15 +93,15 @@ model Verification {
   expiresAt        DateTime
   isUsed           Boolean          @default(false)
   createdAt        DateTime         @default(now())
-
+ 
   // Relations
   user             User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
-
+ 
   @@index([userId])
   @@index([token])
   @@map("verifications")
 }
-
+ 
 model PasswordReset {
   resetId          String           @id @default(uuid())
   userId           String
@@ -99,15 +109,15 @@ model PasswordReset {
   expiresAt        DateTime
   isUsed           Boolean          @default(false)
   createdAt        DateTime         @default(now())
-
+ 
   // Relations
   user             User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
-
+ 
   @@index([userId])
   @@index([token])
   @@map("password_resets")
 }
-
+ 
 model Task {
   taskId          String       @id @default(uuid())
   title           String
@@ -117,38 +127,41 @@ model Task {
   budgetMin       Decimal?     @db.Decimal(10, 2)
   budgetMax       Decimal?     @db.Decimal(10, 2)
   status          TaskStatus   @default(OPEN)
-
+ 
   // Location
   location        Location?    @relation(fields: [locationId], references: [locationId])
   locationId      String?
   addressMasked   String?      // Approximate location for public view
-
+ 
   // Timing
   taskDate        DateTime?    // When task should be done
   estimatedHours  Int?
-
+ 
   // Poster
   posterId        String
   poster          User         @relation("PostedTasks", fields: [posterId], references: [userId], onDelete: Cascade)
-
+ 
   // Assigned Helper
   assignedHelperId String?
   assignedHelper   User?       @relation("AssignedTasks", fields: [assignedHelperId], references: [userId], onDelete: Cascade)
-
+ 
   // Photos
   photos          TaskPhoto[]
-
+ 
+  // Skills
+  taskSkills      TaskSkill[]
+ 
   // Timestamps
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
-
+ 
   @@index([posterId])
   @@index([status])
   @@index([category])
   @@index([taskDate])
   @@map("tasks")
 }
-
+ 
 model TaskPhoto {
   photoId         String       @id @default(uuid())
   taskId          String
@@ -156,11 +169,11 @@ model TaskPhoto {
   photoUrl        String
   thumbnailUrl    String?
   uploadedAt      DateTime     @default(now())
-
+ 
   @@index([taskId])
   @@map("task_photos")
 }
-
+ 
 model Location {
   locationId      String       @id @default(uuid())
   latitude        Decimal      @db.Decimal(10, 8)
@@ -170,10 +183,64 @@ model Location {
   state           String?
   zipCode         String?
   country         String       @default("US")
-
+ 
   // Relations
   tasks           Task[]
-
+ 
   @@index([latitude, longitude])
   @@map("locations")
+}
+ 
+model Skill {
+  skillId         String       @id @default(uuid())
+  name            String       @unique
+  category        TaskCategory
+  description     String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+ 
+  // Relations
+  userSkills      UserSkill[]
+  taskSkills      TaskSkill[]
+ 
+  @@index([category])
+  @@map("skills")
+}
+ 
+model UserSkill {
+  userSkillId     String       @id @default(uuid())
+  userId          String
+  skillId         String
+  level           SkillLevel   @default(BEGINNER)
+  experienceYears Int?         @default(0)
+  isVerified      Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+ 
+  // Relations
+  user            User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  skill           Skill        @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+ 
+  @@unique([userId, skillId])
+  @@index([userId])
+  @@index([skillId])
+  @@map("user_skills")
+}
+ 
+model TaskSkill {
+  taskSkillId     String       @id @default(uuid())
+  taskId          String
+  skillId         String
+  requiredLevel   SkillLevel   @default(BEGINNER)
+  isRequired      Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+ 
+  // Relations
+  task            Task         @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  skill           Skill        @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+ 
+  @@unique([taskId, skillId])
+  @@index([taskId])
+  @@index([skillId])
+  @@map("task_skills")
 }
