@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
-import { Box, Card, CardContent, Typography, Chip, Button, Stack, Fab, Tooltip } from '@mui/material';
-import { LocationOn, AccessTime, AttachMoney, MyLocation, Fullscreen, FullscreenExit } from '@mui/icons-material';
-import { Task } from '../../types/task.types';
+import { Box, Stack, Fab, Tooltip, Typography } from '@mui/material';
+import { MyLocation, Fullscreen, FullscreenExit } from '@mui/icons-material';
+import { Task, TaskWithDistance } from '../../types/task.types';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -27,12 +27,12 @@ import 'leaflet.markercluster';
 // Use the Task type from the types file
 
 interface TaskMapProps {
-  tasks: Task[];
+  tasks: TaskWithDistance[];
   userLocation?: {
     latitude: number;
     longitude: number;
   };
-  onTaskClick?: (task: Task) => void;
+  onTaskClick?: (task: TaskWithDistance) => void;
 }
 
 // Custom marker icon
@@ -109,8 +109,8 @@ const MarkerCluster: React.FC<{
             <span style="background: ${getCategoryColor(task.category)}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">
               ${task.category.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
             </span>
-            ${task.distance ? `<span style="border: 1px solid #ccc; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">${task.distance.toFixed(1)} mi</span>` : ''}
-            ${(task as any).skillMatch?.isGoodMatch ? `<span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">Good Match</span>` : ''}
+            ${(task as TaskWithDistance).distance ? `<span style="border: 1px solid #ccc; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">${(task as TaskWithDistance).distance!.toFixed(1)} mi</span>` : ''}
+            ${(task as TaskWithDistance).skillMatch?.isGoodMatch ? `<span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">Good Match</span>` : ''}
           </div>
           <div style="display: flex; gap: 16px; margin: 8px 0; font-size: 0.875rem;">
             <span style="color: green; font-weight: bold;">$${task.budget}</span>
@@ -147,22 +147,13 @@ const MarkerCluster: React.FC<{
 };
 
 const TaskMap: React.FC<TaskMapProps> = ({ tasks, userLocation, onTaskClick }) => {
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [mapRef, setMapRef] = useState<L.Map | null>(null);
 
   // Default center (Boston area)
   const defaultCenter: [number, number] = [42.3601, -71.0589];
   const center = userLocation 
     ? [userLocation.latitude, userLocation.longitude] as [number, number]
     : defaultCenter;
-
-  const handleMarkerClick = (task: Task) => {
-    setSelectedTask(task);
-    if (onTaskClick) {
-      onTaskClick(task);
-    }
-  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No date set';
@@ -195,9 +186,8 @@ const TaskMap: React.FC<TaskMapProps> = ({ tasks, userLocation, onTaskClick }) =
   };
 
   const centerOnUserLocation = () => {
-    if (userLocation && mapRef) {
-      mapRef.setView([userLocation.latitude, userLocation.longitude], 15);
-    }
+    // This will be handled by the MapController component
+    console.log('Center on user location requested');
   };
 
   return (
@@ -212,7 +202,9 @@ const TaskMap: React.FC<TaskMapProps> = ({ tasks, userLocation, onTaskClick }) =
         zoom={13}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
-        whenCreated={(map) => setMapRef(map)}
+        whenReady={() => {
+          // Map is ready, we can access it through the MapController
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

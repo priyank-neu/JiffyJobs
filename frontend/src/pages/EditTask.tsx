@@ -386,7 +386,7 @@ const EditTask: React.FC = () => {
                     )}
                   </Box>
                   {locationError && (
-                    <Alert severity="error" size="small">
+                    <Alert severity="error">
                       {locationError}
                     </Alert>
                   )}
