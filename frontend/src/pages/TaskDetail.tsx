@@ -23,6 +23,8 @@ import { taskAPI } from '@/services/api.service';
 import { Task, TaskStatus } from '@/types/task.types';
 import { useAuth } from '@/contexts/AuthContext';
 import { TaskDetailCard, TaskDetails, TaskDescription, TaskLocation, TaskPoster } from '../components/tasks/TaskDetailCard';
+import BidForm from '../components/tasks/BidForm';
+import BidList from '../components/tasks/BidList';
 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
@@ -105,7 +107,8 @@ const TaskDetail: React.FC = () => {
     );
   }
 
-  const isOwner = user?.userId === task.posterId;
+  const isOwner = user?.userId === task?.posterId;
+
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -192,42 +195,11 @@ const TaskDetail: React.FC = () => {
           </Box>
 
           {/* Sidebar */}
-          <Box sx={{ flex: { xs: '1', md: '1' }, minWidth: '300px' }}>
+          <Box sx={{ flex: { xs: '1', md: '1.5' }, minWidth: '400px' }}>
             <Stack spacing={3}>
               {/* Poster Information */}
               <TaskPoster task={task} />
 
-              {/* Task Management Actions */}
-              {isOwner && (
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Task Management
-                    </Typography>
-                    <Stack spacing={2}>
-                      {task.status === TaskStatus.OPEN && (
-                        <Button
-                          variant="outlined"
-                          startIcon={<EditIcon />}
-                          onClick={() => navigate(`/tasks/${taskId}/edit`)}
-                          fullWidth
-                        >
-                          Edit Task
-                        </Button>
-                      )}
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        startIcon={<DeleteIcon />}
-                        onClick={handleDeleteTask}
-                        fullWidth
-                      >
-                        Delete Task
-                      </Button>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Task Status Info */}
               <Card>
@@ -246,6 +218,43 @@ const TaskDetail: React.FC = () => {
                   </Typography>
                 </CardContent>
               </Card>
+
+              {/* Bidding Section - Only show when user and task are loaded */}
+              {user && task && task.status === TaskStatus.OPEN && (
+                <>
+                  {/* Helper View - Place Bid Form */}
+                  {!isOwner && (
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Place a Bid
+                        </Typography>
+                        <BidForm 
+                          task={task} 
+                          onBidPlaced={(bid) => {
+                            console.log('Bid placed:', bid);
+                            // Optionally refresh the page or show success message
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Owner View - Bids List */}
+                  {isOwner && (
+                    <BidList 
+                      taskId={task.taskId}
+                      onBidAccepted={(bid) => {
+                        console.log('Bid accepted:', bid);
+                        // Optionally refresh the task data
+                        fetchTask();
+                      }}
+                    />
+                  )}
+                </>
+              )}
+
+
             </Stack>
           </Box>
         </Box>
