@@ -12,6 +12,8 @@ import {
   Divider,
   ImageList,
   ImageListItem,
+  Card,
+  CardContent
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
@@ -20,6 +22,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { taskAPI } from '@/services/api.service';
 import { Task, TaskStatus } from '@/types/task.types';
 import { useAuth } from '@/contexts/AuthContext';
+import { TaskDetailCard, TaskDetails, TaskDescription, TaskLocation, TaskPoster } from '../components/tasks/TaskDetailCard';
 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
@@ -145,148 +148,113 @@ const TaskDetail: React.FC = () => {
 
         <Divider sx={{ my: 3 }} />
 
-        <Stack spacing={3}>
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Description
-            </Typography>
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-              {task.description}
-            </Typography>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+          {/* Main Content */}
+          <Box sx={{ flex: { xs: '1', md: '2' } }}>
+            <Stack spacing={3}>
+              {/* Task Description */}
+              <TaskDescription task={task} />
+
+              {/* Task Details (no skill match for owner view) */}
+              <TaskDetails task={task} showSkillMatch={false} />
+
+              {/* Location Information */}
+              <TaskLocation task={task} />
+
+              {/* Task Photos */}
+              {task.photos && task.photos.length > 0 && (
+                <TaskDetailCard title={`Photos (${task.photos.length})`} icon={<EditIcon />}>
+                  <ImageList cols={3} gap={8} sx={{ mt: 1 }}>
+                    {task.photos.map((photo) => (
+                      <ImageListItem key={photo.photoId}>
+                        <img
+                          src={photo.photoUrl}
+                          alt="Task photo"
+                          loading="lazy"
+                          style={{ 
+                            height: 200, 
+                            objectFit: 'cover', 
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            border: '1px solid #e0e0e0',
+                          }}
+                          onClick={() => window.open(photo.photoUrl, '_blank')}
+                        />
+                      </ImageListItem>
+                    ))}
+                  </ImageList>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Click on any photo to view full size
+                  </Typography>
+                </TaskDetailCard>
+              )}
+            </Stack>
           </Box>
 
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Category
-            </Typography>
-            <Chip label={task.category.replace('_', ' ')} variant="outlined" />
+          {/* Sidebar */}
+          <Box sx={{ flex: { xs: '1', md: '1' }, minWidth: '300px' }}>
+            <Stack spacing={3}>
+              {/* Poster Information */}
+              <TaskPoster task={task} />
+
+              {/* Task Management Actions */}
+              {isOwner && (
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Task Management
+                    </Typography>
+                    <Stack spacing={2}>
+                      {task.status === TaskStatus.OPEN && (
+                        <Button
+                          variant="outlined"
+                          startIcon={<EditIcon />}
+                          onClick={() => navigate(`/tasks/${taskId}/edit`)}
+                          fullWidth
+                        >
+                          Edit Task
+                        </Button>
+                      )}
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={handleDeleteTask}
+                        fullWidth
+                      >
+                        Delete Task
+                      </Button>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Task Status Info */}
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Task Status
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Chip label={task.status} color={statusColors[task.status]} />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {task.status === 'OPEN' && 'This task is available for helpers to apply.'}
+                    {task.status === 'IN_PROGRESS' && 'This task is currently being worked on.'}
+                    {task.status === 'COMPLETED' && 'This task has been completed.'}
+                    {task.status === 'CANCELLED' && 'This task has been cancelled.'}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Stack>
           </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Budget
-            </Typography>
-            <Typography variant="h5" color="primary" fontWeight="bold">
-              ${task.budget}
-            </Typography>
-            {(task.budgetMin || task.budgetMax) && (
-              <Typography variant="body2" color="text.secondary">
-                Range: ${task.budgetMin || task.budget} - ${task.budgetMax || task.budget}
-              </Typography>
-            )}
-          </Box>
-
-          {task.estimatedHours && (
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Estimated Duration
-              </Typography>
-              <Typography variant="body1">{task.estimatedHours} hours</Typography>
-            </Box>
-          )}
-
-          {task.taskDate && (
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Scheduled For
-              </Typography>
-              <Typography variant="body1">
-                {new Date(task.taskDate).toLocaleString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-              </Typography>
-            </Box>
-          )}
-
-          {task.addressMasked && (
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Location
-              </Typography>
-              <Typography variant="body1">{task.addressMasked}</Typography>
-            </Box>
-          )}
-
-          {task.photos && task.photos.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Photos ({task.photos.length})
-              </Typography>
-              <ImageList cols={3} gap={8} sx={{ mt: 1 }}>
-                {task.photos.map((photo) => (
-                  <ImageListItem key={photo.photoId}>
-                    <img
-                      src={photo.photoUrl}
-                      alt="Task photo"
-                      loading="lazy"
-                      style={{ 
-                        height: 200, 
-                        objectFit: 'cover', 
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        border: '1px solid #e0e0e0',
-                      }}
-                      onClick={() => window.open(photo.photoUrl, '_blank')}
-                    />
-                  </ImageListItem>
-                ))}
-              </ImageList>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                Click on any photo to view full size
-              </Typography>
-            </Box>
-          )}
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Posted By
-            </Typography>
-            <Typography variant="body1">{task.poster?.name || task.poster?.email}</Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Posted On
-            </Typography>
-            <Typography variant="body1">
-              {new Date(task.createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
-            </Typography>
-          </Box>
-
-          {task.updatedAt !== task.createdAt && (
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Last Updated
-              </Typography>
-              <Typography variant="body1">
-                {new Date(task.updatedAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-              </Typography>
-            </Box>
-          )}
-        </Stack>
+        </Box>
 
         <Divider sx={{ my: 3 }} />
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <Button 
             variant="outlined" 
-            fullWidth 
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/my-tasks')}
           >
@@ -296,7 +264,6 @@ const TaskDetail: React.FC = () => {
             <Button
               variant="outlined"
               color="error"
-              fullWidth
               onClick={handleCancelTask}
             >
               Cancel Task

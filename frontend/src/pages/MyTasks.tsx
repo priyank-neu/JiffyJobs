@@ -147,7 +147,14 @@ const MyTasks: React.FC = () => {
                         variant="outlined" 
                       />
                     )}
-                    {task.addressMasked && (
+                    {task.location && (
+                      <Chip 
+                        label={`${task.location.city}, ${task.location.state}`} 
+                        size="small" 
+                        variant="outlined" 
+                      />
+                    )}
+                    {!task.location && task.addressMasked && (
                       <Chip 
                         label={task.addressMasked} 
                         size="small" 
