@@ -100,4 +100,12 @@ export interface UpdateTaskData {
   budgetMax?: number;
   taskDate?: Date;
   estimatedHours?: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+    city: string;
+    state: string;
+    zipCode?: string;
+  };
 }
