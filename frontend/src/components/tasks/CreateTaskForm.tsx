@@ -43,8 +43,17 @@ const CreateTaskForm: React.FC = () => {
   });
   const [taskDate, setTaskDate] = useState<Dayjs | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [location, setLocation] = useState({
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    latitude: 0,
+    longitude: 0,
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +63,42 @@ const CreateTaskForm: React.FC = () => {
     });
   };
 
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocation({
+      ...location,
+      [e.target.name]: e.target.value,
+    });
+    setLocationError('');
+  };
+
+  const geocodeAddress = async () => {
+    if (!location.address || !location.city || !location.state) {
+      setLocationError('Please fill in address, city, and state');
+      return;
+    }
+
+    const fullAddress = `${location.address}, ${location.city}, ${location.state} ${location.zipCode}`;
+    
+    try {
+      // Using a free geocoding service (you might want to use Google Maps API in production)
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        setLocation(prev => ({
+          ...prev,
+          latitude: parseFloat(data[0].lat),
+          longitude: parseFloat(data[0].lon),
+        }));
+        setLocationError('');
+      } else {
+        setLocationError('Could not find coordinates for this address');
+      }
+    } catch (error) {
+      setLocationError('Failed to get location coordinates');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -61,6 +106,16 @@ const CreateTaskForm: React.FC = () => {
     // Validation
     if (!formData.title || !formData.description || !formData.budget) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    if (!location.address || !location.city || !location.state) {
+      setError('Please fill in location details');
+      return;
+    }
+
+    if (location.latitude === 0 && location.longitude === 0) {
+      setError('Please get location coordinates by clicking "Get Location"');
       return;
     }
 
@@ -86,6 +141,14 @@ const CreateTaskForm: React.FC = () => {
         estimatedHours: formData.estimatedHours ? parseInt(formData.estimatedHours) : undefined,
         taskDate: taskDate ? taskDate.toDate() : undefined,
         photos: photos.length > 0 ? photos : undefined,
+        location: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address: location.address,
+          city: location.city,
+          state: location.state,
+          zipCode: location.zipCode,
+        },
       });
 
       navigate('/my-tasks');
@@ -205,6 +268,71 @@ const CreateTaskForm: React.FC = () => {
               }}
             />
           </LocalizationProvider>
+
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>
+              Task Location *
+            </Typography>
+            <Stack spacing={2}>
+              <Input
+                id="location-address"
+                label="Street Address *"
+                name="address"
+                value={location.address}
+                onChange={handleLocationChange}
+                required
+                placeholder="123 Main Street"
+              />
+              <Stack direction="row" spacing={2}>
+                <Input
+                  id="location-city"
+                  label="City *"
+                  name="city"
+                  value={location.city}
+                  onChange={handleLocationChange}
+                  required
+                  placeholder="Boston"
+                />
+                <Input
+                  id="location-state"
+                  label="State *"
+                  name="state"
+                  value={location.state}
+                  onChange={handleLocationChange}
+                  required
+                  placeholder="MA"
+                />
+                <Input
+                  id="location-zipcode"
+                  label="ZIP Code"
+                  name="zipCode"
+                  value={location.zipCode}
+                  onChange={handleLocationChange}
+                  placeholder="02101"
+                />
+              </Stack>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={geocodeAddress}
+                  disabled={!location.address || !location.city || !location.state}
+                >
+                  Get Location
+                </Button>
+                {location.latitude !== 0 && location.longitude !== 0 && (
+                  <Typography variant="body2" color="success.main">
+                    ✓ Location found: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+                  </Typography>
+                )}
+              </Box>
+              {locationError && (
+                <Alert severity="error" size="small">
+                  {locationError}
+                </Alert>
+              )}
+            </Stack>
+          </Box>
 
           <PhotoUpload
             photos={photos}
