@@ -14,7 +14,6 @@ import CreateTask from './pages/CreateTask';
 import MyTasks from './pages/MyTasks';
 import EditTask from './pages/EditTask';
 import TaskDetail from './pages/TaskDetail';
-import TaskDetailReadOnly from './pages/TaskDetailReadOnly';
 import TaskDiscovery from './pages/TaskDiscovery';
 import MyBids from './pages/MyBids';
 
