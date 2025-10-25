@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import { taskAPI } from '@/services/api.service';
 import { Task, TaskStatus } from '@/types/task.types';
-
+ 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
   [TaskStatus.IN_BIDDING]: 'warning',
@@ -25,17 +25,17 @@ const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warn
   [TaskStatus.COMPLETED]: 'success',
   [TaskStatus.CANCELLED]: 'default',
 };
-
+ 
 const MyTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
+ 
   useEffect(() => {
     fetchTasks();
   }, []);
-
+ 
   const fetchTasks = async () => {
     try {
       const response = await taskAPI.getMyTasks();
@@ -46,10 +46,10 @@ const MyTasks: React.FC = () => {
       setLoading(false);
     }
   };
-
+ 
   const handleCancelTask = async (taskId: string) => {
     if (!window.confirm('Are you sure you want to cancel this task?')) return;
-
+ 
     try {
       await taskAPI.cancelTask(taskId);
       fetchTasks();
@@ -57,7 +57,7 @@ const MyTasks: React.FC = () => {
       alert(err.response?.data?.error || 'Failed to cancel task');
     }
   };
-
+ 
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -65,7 +65,7 @@ const MyTasks: React.FC = () => {
       </Box>
     );
   }
-
+ 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -80,13 +80,13 @@ const MyTasks: React.FC = () => {
           Post New Task
         </Button>
       </Box>
-
+ 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-
+ 
       {tasks.length === 0 ? (
         <Paper sx={{ p: 6, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -123,57 +123,57 @@ const MyTasks: React.FC = () => {
                     {task.description}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Chip 
-                      label={task.category.replace('_', ' ')} 
-                      size="small" 
-                      variant="outlined" 
+                    <Chip
+                      label={task.category.replace('_', ' ')}
+                      size="small"
+                      variant="outlined"
                     />
-                    <Chip 
-                      label={`$${task.budget}`} 
-                      size="small" 
-                      color="primary" 
+                    <Chip
+                      label={`$${task.budget}`}
+                      size="small"
+                      color="primary"
                     />
                     {task.budgetMin && task.budgetMax && (
-                      <Chip 
-                        label={`Range: $${task.budgetMin}-$${task.budgetMax}`} 
-                        size="small" 
-                        variant="outlined" 
+                      <Chip
+                        label={`Range: $${task.budgetMin}-$${task.budgetMax}`}
+                        size="small"
+                        variant="outlined"
                       />
                     )}
                     {task.estimatedHours && (
-                      <Chip 
-                        label={`${task.estimatedHours}h`} 
-                        size="small" 
-                        variant="outlined" 
+                      <Chip
+                        label={`${task.estimatedHours}h`}
+                        size="small"
+                        variant="outlined"
                       />
                     )}
                     {task.location && (
-                      <Chip 
-                        label={`${task.location.city}, ${task.location.state}`} 
-                        size="small" 
-                        variant="outlined" 
+                      <Chip
+                        label={`${task.location.city}, ${task.location.state}`}
+                        size="small"
+                        variant="outlined"
                       />
                     )}
                     {!task.location && task.addressMasked && (
-                      <Chip 
-                        label={task.addressMasked} 
-                        size="small" 
-                        variant="outlined" 
+                      <Chip
+                        label={task.addressMasked}
+                        size="small"
+                        variant="outlined"
                       />
                     )}
                     {task.photos && task.photos.length > 0 && (
-                      <Chip 
-                        label={`${task.photos.length} photo${task.photos.length > 1 ? 's' : ''}`} 
-                        size="small" 
-                        variant="outlined" 
+                      <Chip
+                        label={`${task.photos.length} photo${task.photos.length > 1 ? 's' : ''}`}
+                        size="small"
+                        variant="outlined"
                         color="secondary"
                       />
                     )}
                     {task.taskDate && (
-                      <Chip 
-                        label={new Date(task.taskDate).toLocaleDateString()} 
-                        size="small" 
-                        variant="outlined" 
+                      <Chip
+                        label={new Date(task.taskDate).toLocaleDateString()}
+                        size="small"
+                        variant="outlined"
                       />
                     )}
                   </Box>
@@ -201,7 +201,7 @@ const MyTasks: React.FC = () => {
                   <Button
                     size="small"
                     variant="text"
-                    onClick={() => navigate(`/tasks/${task.taskId}`)}
+                    onClick={() => navigate(`/task/${task.taskId}`)}
                   >
                     View
                   </Button>
@@ -214,5 +214,5 @@ const MyTasks: React.FC = () => {
     </Container>
   );
 };
-
+ 
 export default MyTasks;

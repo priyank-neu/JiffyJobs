@@ -22,6 +22,13 @@ export enum TaskCategory {
   OTHER = 'OTHER',
 }
 
+export enum BidStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+  WITHDRAWN = 'WITHDRAWN',
+}
+
 export interface Location {
   locationId: string;
   latitude: number;
@@ -116,4 +123,84 @@ export interface UpdateTaskData {
     state: string;
     zipCode?: string;
   };
+}
+
+// Bid related interfaces
+export interface Bid {
+  bidId: string;
+  taskId: string;
+  helperId: string;
+  amount: number;
+  note?: string;
+  status: BidStatus;
+  createdAt: string;
+  updatedAt: string;
+  helper?: {
+    userId: string;
+    name?: string;
+    email: string;
+  };
+}
+
+export interface CreateBidData {
+  taskId: string;
+  amount: number;
+  note?: string;
+}
+
+export interface WithdrawBidData {
+  bidId: string;
+}
+
+export interface AcceptBidData {
+  bidId: string;
+}
+
+// Contract related interfaces
+export interface Contract {
+  contractId: string;
+  taskId: string;
+  helperId: string;
+  posterId: string;
+  agreedAmount: number;
+  acceptedBidId: string;
+  startDate?: string;
+  endDate?: string;
+  terms?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  helper?: {
+    userId: string;
+    name?: string;
+    email: string;
+  };
+  poster?: {
+    userId: string;
+    name?: string;
+    email: string;
+  };
+  acceptedBid?: Bid;
+}
+
+export interface CreateContractData {
+  taskId: string;
+  helperId: string;
+  agreedAmount: number;
+  acceptedBidId: string;
+  startDate?: Date;
+  endDate?: Date;
+  terms?: string;
+}
+
+// Bid listing and filtering
+export interface BidFilter {
+  status?: BidStatus;
+  helperId?: string;
+  taskId?: string;
+}
+
+export interface BidSortOptions {
+  field: 'amount' | 'createdAt' | 'helperName';
+  order: 'asc' | 'desc';
 }

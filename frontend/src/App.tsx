@@ -14,8 +14,8 @@ import CreateTask from './pages/CreateTask';
 import MyTasks from './pages/MyTasks';
 import EditTask from './pages/EditTask';
 import TaskDetail from './pages/TaskDetail';
-import TaskDetailReadOnly from './pages/TaskDetailReadOnly';
 import TaskDiscovery from './pages/TaskDiscovery';
+import MyBids from './pages/MyBids';
 
 function App() {
   return (
@@ -65,27 +65,27 @@ function App() {
                 path="/task/:taskId"
                 element={
                   <ProtectedRoute>
-                    <TaskDetailReadOnly />
+                    <TaskDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tasks/:taskId/edit"
+                element={
+                  <ProtectedRoute>
+                    <EditTask />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-bids"
+                element={
+                  <ProtectedRoute>
+                    <MyBids />
                   </ProtectedRoute>
                 }
               />
               <Route path="*" element={<Navigate to="/" replace />} />
-              <Route
-  path="/tasks/:taskId"
-  element={
-    <ProtectedRoute>
-      <TaskDetail />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/tasks/:taskId/edit"
-  element={
-    <ProtectedRoute>
-      <EditTask />
-    </ProtectedRoute>
-  }
-/>
             </Routes>
           </Layout>
         </AuthProvider>

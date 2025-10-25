@@ -1,246 +1,475 @@
-// This is your Prisma schema file
- 
 generator client {
+
   provider = "prisma-client-js"
+
 }
  
 datasource db {
+
   provider = "postgresql"
+
   url      = env("DATABASE_URL")
+
 }
  
-// Enums
-enum UserRole {
-  POSTER
-  HELPER
-  ADMIN
-}
- 
-enum AccountStatus {
-  ACTIVE
-  SUSPENDED
-  DELETED
-}
- 
-enum VerificationType {
-  EMAIL
-  PHONE
-  ID_DOCUMENT
-}
- 
-enum TaskStatus {
-  OPEN
-  IN_BIDDING
-  ASSIGNED
-  IN_PROGRESS
-  AWAITING_CONFIRMATION
-  DISPUTED
-  COMPLETED
-  CANCELLED
-}
- 
-enum TaskCategory {
-  HOME_REPAIR
-  CLEANING
-  MOVING
-  DELIVERY
-  ASSEMBLY
-  YARD_WORK
-  PET_CARE
-  TECH_SUPPORT
-  TUTORING
-  OTHER
-}
- 
-enum SkillLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  EXPERT
-}
- 
-// Models
 model User {
-  userId           String        @id @default(uuid())
-  email            String        @unique
-  passwordHash     String
-  name             String?
-  phoneNumber      String?
-  accountStatus    AccountStatus @default(ACTIVE)
-  isVerified       Boolean       @default(false)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
- 
-  // Auth Relations
-  verifications    Verification[]
-  passwordResets   PasswordReset[]
- 
-  // Task Relations
-  postedTasks      Task[]        @relation("PostedTasks")
-  assignedTasks    Task[]        @relation("AssignedTasks")
- 
-  // Skill Relations
-  userSkills       UserSkill[]
+
+  userId          String          @id @default(uuid())
+
+  email           String          @unique
+
+  passwordHash    String
+
+  name            String?
+
+  phoneNumber     String?
+
+  accountStatus   AccountStatus   @default(ACTIVE)
+
+  isVerified      Boolean         @default(false)
+
+  createdAt       DateTime        @default(now())
+
+  updatedAt       DateTime        @updatedAt
+
+  bids            Bid[]
+
+  contracts       Contract[]      @relation("HelperContracts")
+
+  posterContracts Contract[]      @relation("PosterContracts")
+
+  passwordResets  PasswordReset[]
+
+  assignedTasks   Task[]          @relation("AssignedTasks")
+
+  postedTasks     Task[]          @relation("PostedTasks")
+
+  userSkills      UserSkill[]
+
+  verifications   Verification[]
  
   @@map("users")
+
 }
  
 model Verification {
+
   verificationId   String           @id @default(uuid())
+
   userId           String
+
   verificationType VerificationType
+
   token            String           @unique
+
   expiresAt        DateTime
+
   isUsed           Boolean          @default(false)
+
   createdAt        DateTime         @default(now())
- 
-  // Relations
+
   user             User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
  
   @@index([userId])
+
   @@index([token])
+
   @@map("verifications")
+
 }
  
 model PasswordReset {
-  resetId          String           @id @default(uuid())
-  userId           String
-  token            String           @unique
-  expiresAt        DateTime
-  isUsed           Boolean          @default(false)
-  createdAt        DateTime         @default(now())
- 
-  // Relations
-  user             User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  resetId   String   @id @default(uuid())
+
+  userId    String
+
+  token     String   @unique
+
+  expiresAt DateTime
+
+  isUsed    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
  
   @@index([userId])
+
   @@index([token])
+
   @@map("password_resets")
+
 }
  
 model Task {
-  taskId          String       @id @default(uuid())
-  title           String
-  description     String       @db.Text
-  category        TaskCategory
-  budget          Decimal      @db.Decimal(10, 2)
-  budgetMin       Decimal?     @db.Decimal(10, 2)
-  budgetMax       Decimal?     @db.Decimal(10, 2)
-  status          TaskStatus   @default(OPEN)
- 
-  // Location
-  location        Location?    @relation(fields: [locationId], references: [locationId])
-  locationId      String?
-  addressMasked   String?      // Approximate location for public view
- 
-  // Timing
-  taskDate        DateTime?    // When task should be done
-  estimatedHours  Int?
- 
-  // Poster
-  posterId        String
-  poster          User         @relation("PostedTasks", fields: [posterId], references: [userId], onDelete: Cascade)
- 
-  // Assigned Helper
+
+  taskId           String       @id @default(uuid())
+
+  title            String
+
+  description      String
+
+  category         TaskCategory
+
+  budget           Decimal      @db.Decimal(10, 2)
+
+  budgetMin        Decimal?     @db.Decimal(10, 2)
+
+  budgetMax        Decimal?     @db.Decimal(10, 2)
+
+  status           TaskStatus   @default(OPEN)
+
+  locationId       String?
+
+  addressMasked    String?
+
+  taskDate         DateTime?
+
+  estimatedHours   Int?
+
+  posterId         String
+
   assignedHelperId String?
-  assignedHelper   User?       @relation("AssignedTasks", fields: [assignedHelperId], references: [userId], onDelete: Cascade)
- 
-  // Photos
-  photos          TaskPhoto[]
- 
-  // Skills
-  taskSkills      TaskSkill[]
- 
-  // Timestamps
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+
+  createdAt        DateTime     @default(now())
+
+  updatedAt        DateTime     @updatedAt
+
+  bids             Bid[]
+
+  contract         Contract?
+
+  photos           TaskPhoto[]
+
+  taskSkills       TaskSkill[]
+
+  assignedHelper   User?        @relation("AssignedTasks", fields: [assignedHelperId], references: [userId], onDelete: Cascade)
+
+  location         Location?    @relation(fields: [locationId], references: [locationId])
+
+  poster           User         @relation("PostedTasks", fields: [posterId], references: [userId], onDelete: Cascade)
  
   @@index([posterId])
+
   @@index([status])
+
   @@index([category])
+
   @@index([taskDate])
+
   @@map("tasks")
+
 }
  
 model TaskPhoto {
-  photoId         String       @id @default(uuid())
-  taskId          String
-  task            Task         @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  photoUrl        String
-  thumbnailUrl    String?
-  uploadedAt      DateTime     @default(now())
+
+  photoId      String   @id @default(uuid())
+
+  taskId       String
+
+  photoUrl     String
+
+  thumbnailUrl String?
+
+  uploadedAt   DateTime @default(now())
+
+  task         Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
  
   @@index([taskId])
+
   @@map("task_photos")
+
 }
  
 model Location {
-  locationId      String       @id @default(uuid())
-  latitude        Decimal      @db.Decimal(10, 8)
-  longitude       Decimal      @db.Decimal(11, 8)
-  address         String
-  city            String?
-  state           String?
-  zipCode         String?
-  country         String       @default("US")
- 
-  // Relations
-  tasks           Task[]
+
+  locationId String  @id @default(uuid())
+
+  latitude   Decimal @db.Decimal(10, 8)
+
+  longitude  Decimal @db.Decimal(11, 8)
+
+  address    String
+
+  city       String?
+
+  state      String?
+
+  zipCode    String?
+
+  country    String  @default("US")
+
+  tasks      Task[]
  
   @@index([latitude, longitude])
+
   @@map("locations")
+
 }
  
 model Skill {
-  skillId         String       @id @default(uuid())
-  name            String       @unique
-  category        TaskCategory
-  description     String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
- 
-  // Relations
-  userSkills      UserSkill[]
-  taskSkills      TaskSkill[]
+
+  skillId     String       @id @default(uuid())
+
+  name        String       @unique
+
+  category    TaskCategory
+
+  description String?
+
+  createdAt   DateTime     @default(now())
+
+  updatedAt   DateTime     @updatedAt
+
+  taskSkills  TaskSkill[]
+
+  userSkills  UserSkill[]
  
   @@index([category])
+
   @@map("skills")
+
 }
  
 model UserSkill {
-  userSkillId     String       @id @default(uuid())
+
+  userSkillId     String     @id @default(uuid())
+
   userId          String
+
   skillId         String
-  level           SkillLevel   @default(BEGINNER)
-  experienceYears Int?         @default(0)
-  isVerified      Boolean      @default(false)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
- 
-  // Relations
-  user            User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  skill           Skill        @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+
+  level           SkillLevel @default(BEGINNER)
+
+  experienceYears Int?       @default(0)
+
+  isVerified      Boolean    @default(false)
+
+  createdAt       DateTime   @default(now())
+
+  updatedAt       DateTime   @updatedAt
+
+  skill           Skill      @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+
+  user            User       @relation(fields: [userId], references: [userId], onDelete: Cascade)
  
   @@unique([userId, skillId])
+
   @@index([userId])
+
   @@index([skillId])
+
   @@map("user_skills")
+
 }
  
 model TaskSkill {
-  taskSkillId     String       @id @default(uuid())
-  taskId          String
-  skillId         String
-  requiredLevel   SkillLevel   @default(BEGINNER)
-  isRequired      Boolean      @default(true)
-  createdAt       DateTime     @default(now())
- 
-  // Relations
-  task            Task         @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  skill           Skill        @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+
+  taskSkillId   String     @id @default(uuid())
+
+  taskId        String
+
+  skillId       String
+
+  requiredLevel SkillLevel @default(BEGINNER)
+
+  isRequired    Boolean    @default(true)
+
+  createdAt     DateTime   @default(now())
+
+  skill         Skill      @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+
+  task          Task       @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
  
   @@unique([taskId, skillId])
+
   @@index([taskId])
+
   @@index([skillId])
+
   @@map("task_skills")
+
 }
+ 
+model Bid {
+
+  bidId     String    @id @default(uuid())
+
+  taskId    String
+
+  helperId  String
+
+  amount    Decimal   @db.Decimal(10, 2)
+
+  note      String?
+
+  status    BidStatus @default(PENDING)
+
+  createdAt DateTime  @default(now())
+
+  updatedAt DateTime  @updatedAt
+
+  helper    User      @relation(fields: [helperId], references: [userId], onDelete: Cascade)
+
+  task      Task      @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  contract  Contract?
+ 
+  @@unique([taskId, helperId])
+
+  @@index([taskId])
+
+  @@index([helperId])
+
+  @@index([status])
+
+  @@map("bids")
+
+}
+ 
+model Contract {
+
+  contractId    String    @id @default(uuid())
+
+  taskId        String    @unique
+
+  helperId      String
+
+  posterId      String
+
+  agreedAmount  Decimal   @db.Decimal(10, 2)
+
+  acceptedBidId String    @unique
+
+  startDate     DateTime?
+
+  endDate       DateTime?
+
+  terms         String?
+
+  isActive      Boolean   @default(true)
+
+  createdAt     DateTime  @default(now())
+
+  updatedAt     DateTime  @updatedAt
+
+  acceptedBid   Bid       @relation(fields: [acceptedBidId], references: [bidId], onDelete: Cascade)
+
+  helper        User      @relation("HelperContracts", fields: [helperId], references: [userId], onDelete: Cascade)
+
+  poster        User      @relation("PosterContracts", fields: [posterId], references: [userId], onDelete: Cascade)
+
+  task          Task      @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+ 
+  @@index([taskId])
+
+  @@index([helperId])
+
+  @@index([posterId])
+
+  @@index([isActive])
+
+  @@map("contracts")
+
+}
+ 
+enum UserRole {
+
+  POSTER
+
+  HELPER
+
+  ADMIN
+
+}
+ 
+enum AccountStatus {
+
+  ACTIVE
+
+  SUSPENDED
+
+  DELETED
+
+}
+ 
+enum VerificationType {
+
+  EMAIL
+
+  PHONE
+
+  ID_DOCUMENT
+
+}
+ 
+enum TaskStatus {
+
+  OPEN
+
+  IN_BIDDING
+
+  ASSIGNED
+
+  IN_PROGRESS
+
+  AWAITING_CONFIRMATION
+
+  DISPUTED
+
+  COMPLETED
+
+  CANCELLED
+
+}
+ 
+enum TaskCategory {
+
+  HOME_REPAIR
+
+  CLEANING
+
+  MOVING
+
+  DELIVERY
+
+  ASSEMBLY
+
+  YARD_WORK
+
+  PET_CARE
+
+  TECH_SUPPORT
+
+  TUTORING
+
+  OTHER
+
+}
+ 
+enum SkillLevel {
+
+  BEGINNER
+
+  INTERMEDIATE
+
+  ADVANCED
+
+  EXPERT
+
+}
+ 
+enum BidStatus {
+
+  PENDING
+
+  ACCEPTED
+
+  REJECTED
+
+  WITHDRAWN
+
+}
+
+ 

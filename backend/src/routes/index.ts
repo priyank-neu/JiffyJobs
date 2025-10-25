@@ -3,6 +3,7 @@ import authRoutes from './auth.routes';
 import taskRoutes from './task.routes';
 import uploadRoutes from './upload.routes';
 import discoveryRoutes from './discovery.routes';
+import bidRoutes from './bid.routes';
  
 const router = Router();
  
@@ -11,6 +12,7 @@ router.use('/auth', authRoutes);
 router.use('/tasks', taskRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/discover', discoveryRoutes);
+router.use('/bids', bidRoutes);
  
 // Health check
 router.get('/health', (req, res) => {
@@ -18,4 +20,3 @@ router.get('/health', (req, res) => {
 });
  
 export default router;
- 

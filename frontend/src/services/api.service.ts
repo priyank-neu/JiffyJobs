@@ -1,5 +1,15 @@
 import axios from 'axios';
-import { Task, CreateTaskData, UpdateTaskData } from '@/types/task.types';
+import { 
+  Task, 
+  CreateTaskData, 
+  UpdateTaskData,
+  Bid,
+  CreateBidData,
+  Contract,
+  CreateContractData,
+  BidFilter,
+  BidSortOptions
+} from '@/types/task.types';
 import { AuthResponse, SignupData, LoginData, ForgotPasswordData, ResetPasswordData } from '@/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -130,6 +140,74 @@ export const discoveryAPI = {
     const response = await api.get('/discover/tasks/count', { 
       params: { latitude, longitude, radius } 
     });
+    return response.data;
+  },
+};
+
+// Bid API
+export const bidAPI = {
+  // Place a bid on a task
+  placeBid: async (data: CreateBidData): Promise<{ message: string; bid: Bid }> => {
+    const response = await api.post('/bids', data);
+    return response.data;
+  },
+
+  // Withdraw a bid
+  withdrawBid: async (bidId: string): Promise<{ message: string }> => {
+    const response = await api.patch(`/bids/${bidId}/withdraw`);
+    return response.data;
+  },
+
+  // Accept a bid (poster only)
+  acceptBid: async (bidId: string): Promise<{ message: string; contract: Contract }> => {
+    const response = await api.post(`/bids/${bidId}/accept`);
+    return response.data;
+  },
+
+  // Get helper's bids
+  getMyBids: async (filters?: BidFilter, sort?: BidSortOptions): Promise<{ message: string; bids: Bid[] }> => {
+    const params: any = {};
+    if (filters?.status) params.status = filters.status;
+    if (filters?.taskId) params.taskId = filters.taskId;
+    if (sort?.field) params.sortBy = sort.field;
+    if (sort?.order) params.sortOrder = sort.order;
+
+    const response = await api.get('/bids/my-bids', { params });
+    return response.data;
+  },
+
+  // Get bids for a specific task
+  getTaskBids: async (taskId: string, filters?: BidFilter, sort?: BidSortOptions): Promise<{ message: string; bids: Bid[] }> => {
+    const params: any = {};
+    if (filters?.status) params.status = filters.status;
+    if (sort?.field) params.sortBy = sort.field;
+    if (sort?.order) params.sortOrder = sort.order;
+
+    const response = await api.get(`/bids/tasks/${taskId}/bids`, { params });
+    return response.data;
+  },
+
+  // Get contract for a task
+  getTaskContract: async (taskId: string): Promise<{ message: string; contract: Contract }> => {
+    const response = await api.get(`/bids/tasks/${taskId}/contract`);
+    return response.data;
+  },
+
+  // Get contract by ID
+  getContract: async (contractId: string): Promise<{ message: string; contract: Contract }> => {
+    const response = await api.get(`/bids/contracts/${contractId}`);
+    return response.data;
+  },
+
+  // Update contract
+  updateContract: async (contractId: string, data: Partial<CreateContractData>): Promise<{ message: string; contract: Contract }> => {
+    const response = await api.put(`/bids/contracts/${contractId}`, data);
+    return response.data;
+  },
+
+  // Deactivate contract
+  deactivateContract: async (contractId: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/bids/contracts/${contractId}`);
     return response.data;
   },
 };

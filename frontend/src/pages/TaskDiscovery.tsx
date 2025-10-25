@@ -101,8 +101,11 @@ const TaskDiscovery: React.FC = () => {
 
 
   useEffect(() => {
-    searchTasks();
-  }, [filters, pagination.page]);
+    // Only search tasks when we have a location (either user location or default)
+    if (userLocation || locationError) {
+      searchTasks();
+    }
+  }, [filters, pagination.page, userLocation, locationError]);
 
   // Debug effect to track showZipDialog state changes
   useEffect(() => {
@@ -181,6 +184,8 @@ const TaskDiscovery: React.FC = () => {
     // Use user location if available, otherwise use a default location (Boston)
     const latitude = userLocation?.latitude || 42.3398;
     const longitude = userLocation?.longitude || -71.0882;
+    
+    console.log('Searching tasks with location:', { latitude, longitude, userLocation, locationError });
 
     try {
       const response = await discoveryAPI.discoverTasks({
@@ -201,6 +206,7 @@ const TaskDiscovery: React.FC = () => {
         sortOrder: filters.sortOrder,
       });
 
+      console.log('Tasks received:', response.tasks);
       setTasks(response.tasks);
       setPagination(response.pagination);
     } catch (err: any) {
@@ -678,9 +684,9 @@ const TaskDiscovery: React.FC = () => {
                   <Button
                     size="small"
                     variant="outlined"
-                    disabled
+                    onClick={() => navigate(`/task/${task.taskId}`)}
                   >
-                    Bid (Coming Soon)
+                    Place Bid
                   </Button>
                 </CardActions>
               </Card>
