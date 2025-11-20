@@ -7,12 +7,12 @@ import * as notificationService from '../services/notification.service';
  * GET /api/notifications?page=1&limit=20&unreadOnly=false
  */
 export const getNotifications = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const userId = req.user!.userId;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const unreadOnly = req.query.unreadOnly === 'true';
+  const userId = req.user!.userId;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const unreadOnly = req.query.unreadOnly === 'true';
 
+  try {
     // Validate pagination
     if (page < 1) {
       res.status(400).json({ error: 'Page must be greater than 0' });
@@ -28,7 +28,19 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
     res.status(200).json(result);
   } catch (error: any) {
     console.error('Error getting notifications:', error);
-    res.status(500).json({ error: 'Failed to get notifications' });
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      userId,
+      page,
+      limit,
+      unreadOnly,
+    });
+    res.status(500).json({ 
+      error: 'Failed to get notifications',
+      ...(process.env.NODE_ENV === 'development' && { details: error.message })
+    });
   }
 };
 
