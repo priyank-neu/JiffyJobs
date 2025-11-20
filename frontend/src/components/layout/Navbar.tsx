@@ -1,12 +1,24 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, Container } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Container, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import NotificationBadge from '@/components/notifications/NotificationBadge';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
+import NotificationToast from '@/components/notifications/NotificationToast';
 
 const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
+  const {
+    unreadCount,
+    currentToast,
+    showNotificationCenter,
+    setShowNotificationCenter,
+    dismissToast,
+  } = useNotifications();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -41,6 +53,14 @@ const Navbar: React.FC = () => {
     <Button color="inherit" onClick={() => navigate('/my-bids')}>
       My Bids
     </Button>
+    <NotificationBadge count={unreadCount}>
+      <IconButton
+        color="inherit"
+        onClick={() => setShowNotificationCenter(true)}
+      >
+        <NotificationsIcon />
+      </IconButton>
+    </NotificationBadge>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <PersonIcon fontSize="small" />
       <Typography variant="body2">
@@ -71,6 +91,20 @@ const Navbar: React.FC = () => {
           )}
         </Toolbar>
       </Container>
+      <NotificationCenter
+        open={showNotificationCenter}
+        onClose={() => setShowNotificationCenter(false)}
+      />
+      <NotificationToast
+        notification={currentToast}
+        onClose={dismissToast}
+        onClick={() => {
+          if (currentToast?.relatedTaskId) {
+            navigate(`/task/${currentToast.relatedTaskId}`);
+            dismissToast();
+          }
+        }}
+      />
     </AppBar>
   );
 };

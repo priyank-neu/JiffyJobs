@@ -48,6 +48,15 @@ model User {
 
   verifications   Verification[]
 
+  // Chat relations
+  sentMessages    ChatMessage[]      @relation("MessageSender")
+  receivedMessages ChatMessage[]     @relation("MessageReceiver")
+  posterThreads   ChatThread[]       @relation("PosterThreads")
+  helperThreads   ChatThread[]        @relation("HelperThreads")
+  notifications   Notification[]
+  messageReports  MessageReport[]
+  
+  // Task execution timeline
   timelineEvents TaskTimeline[]
  
   @@map("users")
@@ -145,6 +154,8 @@ model Task {
   photos           TaskPhoto[]
 
   taskSkills       TaskSkill[]
+
+  chatThreads      ChatThread[]
 
   assignedHelper   User?        @relation("AssignedTasks", fields: [assignedHelperId], references: [userId], onDelete: Cascade)
 
@@ -508,5 +519,155 @@ model TaskTimeline {
 
   @@index([taskId, createdAt])
   @@map("task_timeline")
+}
+
+model ChatThread {
+
+  threadId    String        @id @default(uuid())
+
+  taskId      String
+
+  posterId    String
+
+  helperId    String
+
+  createdAt   DateTime      @default(now())
+
+  updatedAt   DateTime      @updatedAt
+
+  task        Task          @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  poster      User          @relation("PosterThreads", fields: [posterId], references: [userId], onDelete: Cascade)
+
+  helper      User          @relation("HelperThreads", fields: [helperId], references: [userId], onDelete: Cascade)
+
+  messages    ChatMessage[]
+ 
+  @@unique([taskId, helperId])
+
+  @@index([taskId])
+
+  @@index([posterId])
+
+  @@index([helperId])
+
+  @@map("chat_threads")
+
+}
+
+model ChatMessage {
+
+  messageId   String        @id @default(uuid())
+
+  threadId    String
+
+  senderId    String
+
+  receiverId  String
+
+  body        String        @db.Text
+
+  readAt      DateTime?
+
+  isDeleted   Boolean       @default(false)
+
+  createdAt   DateTime      @default(now())
+
+  thread      ChatThread    @relation(fields: [threadId], references: [threadId], onDelete: Cascade)
+
+  sender      User          @relation("MessageSender", fields: [senderId], references: [userId], onDelete: Cascade)
+
+  receiver    User          @relation("MessageReceiver", fields: [receiverId], references: [userId], onDelete: Cascade)
+
+  reports     MessageReport[]
+ 
+  @@index([threadId])
+
+  @@index([senderId])
+
+  @@index([receiverId])
+
+  @@index([createdAt])
+
+  @@map("chat_messages")
+
+}
+
+model Notification {
+
+  notificationId String          @id @default(uuid())
+
+  userId         String
+
+  type           NotificationType
+
+  title          String
+
+  message        String          @db.Text
+
+  isRead         Boolean         @default(false)
+
+  relatedTaskId  String?
+
+  relatedThreadId String?
+
+  relatedBidId   String?
+
+  metadata       Json?
+
+  createdAt      DateTime        @default(now())
+
+  readAt         DateTime?
+
+  user           User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
+ 
+  @@index([userId])
+
+  @@index([isRead])
+
+  @@index([createdAt])
+
+  @@map("notifications")
+
+}
+
+model MessageReport {
+
+  reportId   String        @id @default(uuid())
+
+  messageId  String
+
+  reporterId String
+
+  reason     String?       @db.Text
+
+  createdAt  DateTime      @default(now())
+
+  message    ChatMessage   @relation(fields: [messageId], references: [messageId], onDelete: Cascade)
+
+  reporter   User          @relation(fields: [reporterId], references: [userId], onDelete: Cascade)
+ 
+  @@index([messageId])
+
+  @@index([reporterId])
+
+  @@map("message_reports")
+
+}
+
+enum NotificationType {
+
+  NEW_MESSAGE
+
+  BID_ACCEPTED
+
+  HELPER_ASSIGNED
+
+  TASK_UPDATED
+
+  CONTRACT_CREATED
+
+  OTHER
+
 }
  
