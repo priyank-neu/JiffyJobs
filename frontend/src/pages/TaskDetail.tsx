@@ -25,6 +25,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TaskDetailCard, TaskDetails, TaskDescription, TaskLocation, TaskPoster } from '../components/tasks/TaskDetailCard';
 import BidForm from '../components/tasks/BidForm';
 import BidList from '../components/tasks/BidList';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import TaskCompletionDialog from './TaskCompletionDialog';
 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
@@ -44,6 +48,8 @@ const TaskDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
     fetchTask();
@@ -83,6 +89,43 @@ const TaskDetail: React.FC = () => {
       alert(err.response?.data?.error || 'Failed to delete task');
     }
   };
+
+  const handleStartTask = async () => {
+    if (!taskId) return;
+
+    try {
+      await taskAPI.startTask(taskId);
+      alert('Task started successfully!');
+      fetchTask();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to start task');
+    }
+  };
+
+  const handleCompleteTask = async (notes: string) => {
+    if (!taskId) return;
+
+    try {
+      await taskAPI.completeTask(taskId, notes);
+      fetchTask();
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+  
+  const handleConfirmCompletion = async (notes: string) => {
+    if (!taskId) return;
+
+    try {
+      await taskAPI.confirmTaskCompletion(taskId, notes);
+      fetchTask();
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+
 
   if (loading) {
     return (
@@ -201,21 +244,70 @@ const TaskDetail: React.FC = () => {
               <TaskPoster task={task} />
 
 
-              {/* Task Status Info */}
+               {/* Task Status Info */}
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Task Status
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <Chip label={task.status} color={statusColors[task.status]} />
                   </Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     {task.status === 'OPEN' && 'This task is available for helpers to apply.'}
-                    {task.status === 'IN_PROGRESS' && 'This task is currently being worked on.'}
+                    {task.status === 'ASSIGNED' && !isOwner && 'You are assigned! Start working when ready.'}
+                    {task.status === 'ASSIGNED' && isOwner && 'A helper has been assigned. Waiting for them to start.'}
+                    {task.status === 'IN_PROGRESS' && !isOwner && 'Currently working on this task.'}
+                    {task.status === 'IN_PROGRESS' && isOwner && 'Helper is working on your task.'}
+                    {task.status === 'AWAITING_CONFIRMATION' && !isOwner && 'Waiting for poster to confirm completion.'}
+                    {task.status === 'AWAITING_CONFIRMATION' && isOwner && 'Please confirm task completion.'}
                     {task.status === 'COMPLETED' && 'This task has been completed.'}
                     {task.status === 'CANCELLED' && 'This task has been cancelled.'}
                   </Typography>
+
+                  {!isOwner && task.assignedHelperId === user?.userId && (
+                    <Stack spacing={2}>
+                      {task.status === 'ASSIGNED' && (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          fullWidth
+                          startIcon={<PlayArrowIcon />}
+                          onClick={handleStartTask}
+                        >
+                          Start Task
+                        </Button>
+                      )}
+                      
+                      {task.status === 'IN_PROGRESS' && (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          fullWidth
+                          startIcon={<CheckCircleIcon />}
+                          onClick={() => setShowCompleteDialog(true)}
+                        >
+                          Mark as Complete
+                        </Button>
+                      )}
+                    </Stack>
+                  )}
+
+                  {isOwner && (
+                    <Stack spacing={2}>
+                      {task.status === 'AWAITING_CONFIRMATION' && (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          fullWidth
+                          startIcon={<VerifiedIcon />}
+                          onClick={() => setShowConfirmDialog(true)}
+                        >
+                          Confirm Completion
+                        </Button>
+                      )}
+                    </Stack>
+                  )}
                 </CardContent>
               </Card>
 
@@ -280,6 +372,24 @@ const TaskDetail: React.FC = () => {
           )}
         </Box>
       </Paper>
+
+      <TaskCompletionDialog
+        open={showCompleteDialog}
+        onClose={() => setShowCompleteDialog(false)}
+        onConfirm={handleCompleteTask}
+        title="Mark Task as Complete"
+        description="You're about to mark this task as complete. The poster will be notified to review and confirm your work."
+        type="complete"
+      />
+
+      <TaskCompletionDialog
+        open={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handleConfirmCompletion}
+        title="Confirm Task Completion"
+        description="Confirm that the task has been completed satisfactorily. Payment will be released to the helper."
+        type="confirm"
+      />
     </Container>
   );
 };

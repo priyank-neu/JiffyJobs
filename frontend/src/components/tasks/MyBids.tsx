@@ -154,7 +154,7 @@ const MyBids: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" gutterBottom>
-                    Task ID: {bid.taskId}
+                  {bid.task?.title || 'Task'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     Click "View Task" to see full details

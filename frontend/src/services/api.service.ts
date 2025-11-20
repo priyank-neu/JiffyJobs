@@ -100,6 +100,22 @@ export const taskAPI = {
     const response = await api.delete(`/tasks/${taskId}`);
     return response.data;
   },
+
+  startTask: async (taskId: string): Promise<{ message: string; task: Task }> => {
+    const response = await api.post(`/tasks/${taskId}/start`);
+    return response.data;
+  },
+
+  completeTask: async (taskId: string, notes: string): Promise<{ message: string; task: Task }> => {
+    const response = await api.post(`/tasks/${taskId}/complete`, { notes });
+    return response.data;
+  },
+
+  confirmTaskCompletion: async (taskId: string, notes: string): Promise<{ message: string; task: Task }> => {
+    const response = await api.post(`/tasks/${taskId}/confirm`, { notes });
+    return response.data;
+  },
+  
 };
 
 // Discovery API
