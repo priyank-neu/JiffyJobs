@@ -19,12 +19,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { taskAPI } from '@/services/api.service';
+import { taskAPI, bidAPI } from '@/services/api.service';
+import { chatAPI } from '@/services/api.service';
 import { Task, TaskStatus } from '@/types/task.types';
+import { ChatThread } from '@/types/chat.types';
 import { useAuth } from '@/contexts/AuthContext';
 import { TaskDetailCard, TaskDetails, TaskDescription, TaskLocation, TaskPoster } from '../components/tasks/TaskDetailCard';
 import BidForm from '../components/tasks/BidForm';
 import BidList from '../components/tasks/BidList';
+import ChatWindow from '../components/chat/ChatWindow';
 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
@@ -43,11 +46,20 @@ const TaskDetail: React.FC = () => {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [chatThread, setChatThread] = useState<ChatThread | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchTask();
   }, [taskId]);
+
+  useEffect(() => {
+    if (task && user) {
+      loadChatThread();
+    }
+  }, [task, user]);
 
   const fetchTask = async () => {
     if (!taskId) return;
@@ -82,6 +94,82 @@ const TaskDetail: React.FC = () => {
     } catch (err: any) {
       alert(err.response?.data?.error || 'Failed to delete task');
     }
+  };
+
+  const loadChatThread = async () => {
+    if (!task || !user || !taskId) return;
+
+    try {
+      setChatLoading(true);
+      // Try to find existing thread
+      const threads = await chatAPI.getThreads();
+      const existingThread = threads.find(
+        (t) => t.taskId === taskId && (t.posterId === user.userId || t.helperId === user.userId)
+      );
+
+      if (existingThread) {
+        setChatThread(existingThread);
+      }
+    } catch (err: any) {
+      console.error('Failed to load chat thread:', err);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!task || !user || !taskId) return;
+
+    try {
+      setChatLoading(true);
+      // Determine counterpart
+      const isOwner = user.userId === task.posterId;
+      let counterpartId: string | undefined;
+
+      if (isOwner) {
+        // For owner: use assigned helper, or get helper from first bid
+        if (task.assignedHelperId) {
+          counterpartId = task.assignedHelperId;
+        } else {
+          // Fetch bids to get helper ID
+          try {
+            const bidsResponse = await bidAPI.getTaskBids(taskId);
+            if (bidsResponse.bids && bidsResponse.bids.length > 0) {
+              // Use the first bid's helper
+              counterpartId = bidsResponse.bids[0].helperId;
+            }
+          } catch (bidError) {
+            console.error('Failed to fetch bids:', bidError);
+          }
+        }
+      } else {
+        // For helper: use poster ID
+        counterpartId = task.posterId;
+      }
+
+      if (!counterpartId) {
+        alert('Cannot start chat: No counterpart found. Make sure there is a bid on this task or a helper is assigned.');
+        return;
+      }
+
+      const response = await chatAPI.getOrCreateThread({
+        taskId,
+        helperId: counterpartId,
+      });
+      setChatThread(response.thread);
+      setShowChat(true);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to start chat');
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const getCounterpartName = (): string => {
+    if (!chatThread || !user) return '';
+    const isOwner = user.userId === chatThread.posterId;
+    const counterpart = isOwner ? chatThread.helper : chatThread.poster;
+    return counterpart?.name || counterpart?.email || 'User';
   };
 
   if (loading) {
@@ -218,6 +306,64 @@ const TaskDetail: React.FC = () => {
                   </Typography>
                 </CardContent>
               </Card>
+
+              {/* Chat Section */}
+              {user && task && chatThread && (
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6">Chat</Typography>
+                      {chatThread.unreadCount && chatThread.unreadCount > 0 && (
+                        <Chip
+                          label={`${chatThread.unreadCount} unread`}
+                          color="primary"
+                          size="small"
+                        />
+                      )}
+                    </Box>
+                    {showChat ? (
+                      <ChatWindow
+                        threadId={chatThread.threadId}
+                        taskTitle={task.title}
+                        counterpartName={getCounterpartName()}
+                        onClose={() => setShowChat(false)}
+                      />
+                    ) : (
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => setShowChat(true)}
+                      >
+                        Open Chat
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Start Chat Button - Show if thread doesn't exist but user can chat */}
+              {user && task && !chatThread && !chatLoading && (
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Chat
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {isOwner
+                        ? 'Start chatting with helpers who placed bids'
+                        : 'Start chatting with the task poster'}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={handleStartChat}
+                      disabled={chatLoading}
+                    >
+                      Start Chat
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Bidding Section - Only show when user and task are loaded */}
               {user && task && task.status === TaskStatus.OPEN && (

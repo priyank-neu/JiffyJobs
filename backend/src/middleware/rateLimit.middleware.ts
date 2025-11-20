@@ -16,3 +16,15 @@ export const strictRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// ============================================================================
+// Message Rate Limiter - REMOVED
+// ============================================================================
+// The messageRateLimiter export has been completely removed to avoid IPv6
+// validation errors with express-rate-limit v8.1.0. The error was:
+// "Custom keyGenerator appears to use request IP without calling the 
+//  ipKeyGenerator helper function for IPv6 addresses"
+//
+// If rate limiting for messages is needed in the future, implement it in the
+// chat service layer using a simple in-memory cache or database-based approach.
+// ============================================================================

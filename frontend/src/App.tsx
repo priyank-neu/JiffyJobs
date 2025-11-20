@@ -3,6 +3,8 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { theme } from './theme/theme';
 import { AuthProvider } from './contexts/AuthContext';
+import { SocketProvider } from './contexts/SocketContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Home from './pages/Home';
@@ -23,7 +25,9 @@ function App() {
       <CssBaseline />
       <Router>
         <AuthProvider>
-          <Layout>
+          <SocketProvider>
+            <NotificationProvider>
+              <Layout>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
@@ -88,6 +92,8 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Layout>
+          </NotificationProvider>
+          </SocketProvider>
         </AuthProvider>
       </Router>
     </ThemeProvider>
