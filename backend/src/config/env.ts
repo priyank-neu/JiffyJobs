@@ -28,8 +28,8 @@ const getEnvVar = (key: string, defaultValue: string): string => {
 
 const config: EnvConfig = {
   NODE_ENV: getEnvVar('NODE_ENV', 'development'),
-  PORT: parseInt(getEnvVar('PORT', '5000'), 10),
-  API_URL: getEnvVar('API_URL', 'http://localhost:5000'),
+  PORT: parseInt(getEnvVar('PORT', '5001'), 10),
+  API_URL: getEnvVar('API_URL', 'http://localhost:5001'),
   FRONTEND_URL: getEnvVar('FRONTEND_URL', 'http://localhost:5173'),
   DATABASE_URL: getEnvVar('DATABASE_URL', ''),
   JWT_SECRET: getEnvVar('JWT_SECRET', 'fallback_secret_key_for_development_only'),

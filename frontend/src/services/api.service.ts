@@ -11,6 +11,14 @@ import {
   BidSortOptions
 } from '@/types/task.types';
 import { AuthResponse, SignupData, LoginData, ForgotPasswordData, ResetPasswordData } from '@/types';
+import { 
+  ChatThread, 
+  ChatMessage, 
+  CreateThreadRequest, 
+  SendMessageRequest, 
+  ThreadMessagesResponse 
+} from '@/types/chat.types';
+import { NotificationsResponse } from '@/types/notification.types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -30,6 +38,23 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Handle 401 errors - token expired or invalid
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is invalid or expired - clear it and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Only redirect if we're not already on login/signup page
+      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth API
 export const authAPI = {
@@ -208,6 +233,76 @@ export const bidAPI = {
   // Deactivate contract
   deactivateContract: async (contractId: string): Promise<{ message: string }> => {
     const response = await api.delete(`/bids/contracts/${contractId}`);
+    return response.data;
+  },
+};
+
+// Chat API
+export const chatAPI = {
+  // Get or create a chat thread
+  getOrCreateThread: async (data: CreateThreadRequest): Promise<{ message: string; thread: ChatThread }> => {
+    const response = await api.post('/chat/threads', data);
+    return response.data;
+  },
+
+  // Get all threads for the authenticated user
+  getThreads: async (): Promise<ChatThread[]> => {
+    const response = await api.get('/chat/threads');
+    return response.data;
+  },
+
+  // Get a specific thread
+  getThread: async (threadId: string): Promise<ChatThread> => {
+    const response = await api.get(`/chat/threads/${threadId}`);
+    return response.data;
+  },
+
+  // Send a message
+  sendMessage: async (data: SendMessageRequest): Promise<ChatMessage> => {
+    const response = await api.post('/chat/messages', data);
+    return response.data;
+  },
+
+  // Get messages for a thread
+  getThreadMessages: async (threadId: string, page: number = 1, limit: number = 50): Promise<ThreadMessagesResponse> => {
+    const response = await api.get(`/chat/threads/${threadId}/messages`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  // Mark messages as read
+  markMessagesAsRead: async (threadId: string): Promise<{ count: number }> => {
+    const response = await api.patch(`/chat/threads/${threadId}/read`);
+    return response.data;
+  },
+
+  // Report a message
+  reportMessage: async (messageId: string, reason?: string): Promise<{ message: string }> => {
+    const response = await api.post(`/chat/messages/${messageId}/report`, { reason });
+    return response.data;
+  },
+};
+
+// Notification API
+export const notificationAPI = {
+  // Get notifications
+  getNotifications: async (page: number = 1, limit: number = 20, unreadOnly: boolean = false): Promise<NotificationsResponse> => {
+    const response = await api.get('/notifications', {
+      params: { page, limit, unreadOnly },
+    });
+    return response.data;
+  },
+
+  // Mark a notification as read
+  markAsRead: async (notificationId: string): Promise<{ notificationId: string; isRead: boolean; readAt: string }> => {
+    const response = await api.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async (): Promise<{ count: number }> => {
+    const response = await api.patch('/notifications/read-all');
     return response.data;
   },
 };
