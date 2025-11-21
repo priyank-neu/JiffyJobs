@@ -4,5 +4,5 @@
 -- The enum was already created in the previous migration
 
 -- No-op: UserRole enum already exists from initial_auth_setup migration
+-- Using SELECT 1 to satisfy Prisma's requirement for valid SQL
 SELECT 1;
-
