@@ -19,6 +19,7 @@ import TaskDetail from './pages/TaskDetail';
 import TaskDiscovery from './pages/TaskDiscovery';
 import MyBids from './pages/MyBids';
 import Settings from './pages/Settings';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 function App() {
   return (
@@ -95,6 +96,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
                   </ProtectedRoute>
                 }
               />

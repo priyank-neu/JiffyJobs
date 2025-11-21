@@ -438,5 +438,127 @@ export const reviewAPI = {
   },
 };
 
+// Report API
+export const reportAPI = {
+  createReport: async (data: {
+    type: string;
+    targetId: string;
+    reason: string;
+    evidence?: string[];
+  }): Promise<{ message: string; report: any }> => {
+    const response = await api.post('/reports', data);
+    return response.data;
+  },
+
+  getReports: async (params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ reports: any[]; pagination: any }> => {
+    const response = await api.get('/reports', { params });
+    return response.data;
+  },
+
+  getReportById: async (type: string, reportId: string): Promise<{ message: string; report: any }> => {
+    const response = await api.get(`/reports/${type}/${reportId}`);
+    return response.data;
+  },
+
+  resolveReport: async (
+    type: string,
+    reportId: string,
+    status: string,
+    resolutionNotes?: string
+  ): Promise<{ message: string; report: any }> => {
+    const response = await api.patch(`/reports/${type}/${reportId}/resolve`, {
+      status,
+      resolutionNotes,
+    });
+    return response.data;
+  },
+
+  getReportMetrics: async (): Promise<{ message: string; metrics: any }> => {
+    const response = await api.get('/reports/metrics');
+    return response.data;
+  },
+};
+
+// Moderation API (Admin only)
+export const moderationAPI = {
+  suspendUser: async (userId: string, reason?: string): Promise<{ message: string; user: any }> => {
+    const response = await api.post(`/moderation/users/${userId}/suspend`, { reason });
+    return response.data;
+  },
+
+  reactivateUser: async (userId: string): Promise<{ message: string; user: any }> => {
+    const response = await api.post(`/moderation/users/${userId}/reactivate`);
+    return response.data;
+  },
+
+  hideReview: async (reviewId: string, reason?: string): Promise<{ message: string; review: any }> => {
+    const response = await api.post(`/moderation/reviews/${reviewId}/hide`, { reason });
+    return response.data;
+  },
+
+  unhideReview: async (reviewId: string): Promise<{ message: string; review: any }> => {
+    const response = await api.post(`/moderation/reviews/${reviewId}/unhide`);
+    return response.data;
+  },
+
+  lockTask: async (taskId: string, reason: string, reportId?: string): Promise<{ message: string; task: any }> => {
+    const response = await api.post(`/moderation/tasks/${taskId}/lock`, { reason, reportId });
+    return response.data;
+  },
+
+  unlockTask: async (taskId: string): Promise<{ message: string; task: any }> => {
+    const response = await api.post(`/moderation/tasks/${taskId}/unlock`);
+    return response.data;
+  },
+
+  lockContract: async (
+    contractId: string,
+    reason: string,
+    reportId?: string
+  ): Promise<{ message: string; contract: any }> => {
+    const response = await api.post(`/moderation/contracts/${contractId}/lock`, { reason, reportId });
+    return response.data;
+  },
+
+  unlockContract: async (contractId: string): Promise<{ message: string; contract: any }> => {
+    const response = await api.post(`/moderation/contracts/${contractId}/unlock`);
+    return response.data;
+  },
+
+  triggerRefund: async (
+    contractId: string,
+    reason: string,
+    amount?: number,
+    reportId?: string
+  ): Promise<{ message: string; contract: any }> => {
+    const response = await api.post(`/moderation/contracts/${contractId}/refund`, {
+      reason,
+      amount,
+      reportId,
+    });
+    return response.data;
+  },
+
+  getAuditLogs: async (params?: {
+    page?: number;
+    limit?: number;
+    adminId?: string;
+    entityType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ logs: any[]; pagination: any }> => {
+    const response = await api.get('/moderation/audit-logs', { params });
+    return response.data;
+  },
+};
+
 export default api;
  

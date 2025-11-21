@@ -7,6 +7,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import NotificationBadge from '@/components/notifications/NotificationBadge';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import NotificationToast from '@/components/notifications/NotificationToast';
@@ -57,6 +58,15 @@ const Navbar: React.FC = () => {
     <Button color="inherit" startIcon={<SettingsIcon />} onClick={() => navigate('/settings')}>
       Settings
     </Button>
+    {user?.role === 'ADMIN' && (
+      <Button
+        color="inherit"
+        startIcon={<AdminPanelSettingsIcon />}
+        onClick={() => navigate('/admin')}
+      >
+        Admin
+      </Button>
+    )}
     <NotificationBadge count={unreadCount}>
       <IconButton
         color="inherit"
