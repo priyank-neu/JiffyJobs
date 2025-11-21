@@ -249,7 +249,7 @@ export const getPaymentHistory = async (req: AuthRequest, res: Response): Promis
 
     res.status(200).json({
       message: 'Payment history retrieved',
-      payments: payments.map(p => ({
+      payments: payments.map((p: any) => ({
         ...p,
         amount: Number(p.amount),
         metadata: p.metadata ? JSON.parse(p.metadata) : null,

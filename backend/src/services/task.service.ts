@@ -339,7 +339,7 @@ export const completeTask = async (taskId: string, userId: string, autoRelease: 
 
     const { releasePayout } = await import('./payment.service');
     
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Update task status
       await tx.task.update({
         where: { taskId },
@@ -373,6 +373,15 @@ export const completeTask = async (taskId: string, userId: string, autoRelease: 
 
     if (!updatedTask) {
       throw new Error('Task not found after update');
+    }
+
+    // Trigger review prompts for both parties
+    try {
+      const { triggerReviewPrompts } = await import('./taskExecution.service');
+      await triggerReviewPrompts(taskId);
+    } catch (error) {
+      console.error('Error triggering review prompts:', error);
+      // Don't fail task completion if review prompts fail
     }
 
     return updatedTask;

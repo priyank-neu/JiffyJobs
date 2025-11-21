@@ -12,8 +12,9 @@ export const generatePresignedUrl = async (
     throw new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.');
   }
 
-  // Generate unique key
-  const key = `tasks/${crypto.randomUUID()}-${fileName}`;
+  // Generate unique key based on file type
+  const folder = fileType.startsWith('image/') ? 'avatars' : 'tasks';
+  const key = `${folder}/${crypto.randomUUID()}-${fileName}`;
 
   // Development mode: Signal that frontend should use base64
   console.log('📸 Mock photo upload - using base64 encoding for:', fileName);

@@ -10,6 +10,8 @@ on:
     branches: [development, main]
     paths:
       - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch: # Allow manual triggering
 
 jobs:
   build-and-test:
@@ -60,7 +62,9 @@ jobs:
 
       - name: Generate Prisma Client
         working-directory: ./backend
-        run: npm run prisma:generate
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
       - name: Run Prisma Migrations
         working-directory: ./backend

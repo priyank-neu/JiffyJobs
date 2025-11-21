@@ -33,6 +33,9 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import TaskCompletionDialog from './TaskCompletionDialog';
 import ChatWindow from '../components/chat/ChatWindow';
 import PaymentStatus from '../components/payments/PaymentStatus';
+import ReportForm from '../components/reports/ReportForm';
+import { ReportType } from '@/types/report.types';
+import FlagIcon from '@mui/icons-material/Flag';
 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
@@ -58,6 +61,7 @@ const TaskDetail: React.FC = () => {
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [contract, setContract] = useState<Contract | null>(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   useEffect(() => {
     fetchTask();
@@ -273,25 +277,37 @@ const TaskDetail: React.FC = () => {
             </Typography>
             <Chip label={task.status} color={statusColors[task.status]} />
           </Box>
-          {isOwner && task.status === TaskStatus.OPEN && (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                variant="outlined"
-                startIcon={<EditIcon />}
-                onClick={() => navigate(`/tasks/${taskId}/edit`)}
-              >
-                Edit
-              </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {isOwner && task.status === TaskStatus.OPEN && (
+              <>
+                <Button
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={() => navigate(`/tasks/${taskId}/edit`)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={handleDeleteTask}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
+            {!isOwner && (
               <Button
                 variant="outlined"
                 color="error"
-                startIcon={<DeleteIcon />}
-                onClick={handleDeleteTask}
+                startIcon={<FlagIcon />}
+                onClick={() => setShowReportDialog(true)}
               >
-                Delete
+                Report Task
               </Button>
-            </Box>
-          )}
+            )}
+          </Box>
         </Box>
 
         <Divider sx={{ my: 3 }} />
@@ -564,6 +580,20 @@ const TaskDetail: React.FC = () => {
         description="Confirm that the task has been completed satisfactorily. Payment will be released to the helper."
         type="confirm"
       />
+
+      {/* Report Dialog */}
+      {taskId && (
+        <ReportForm
+          open={showReportDialog}
+          onClose={() => setShowReportDialog(false)}
+          onSuccess={() => {
+            setShowReportDialog(false);
+          }}
+          type={ReportType.TASK}
+          targetId={taskId}
+          targetTitle={task.title}
+        />
+      )}
     </Container>
   );
 };

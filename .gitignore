@@ -29,7 +29,8 @@ Thumbs.db
 coverage/
 
 # Prisma
-backend/prisma/migrations/
+# Prisma migrations should be committed
+# backend/prisma/migrations/
 
 # Temporary files
 *.tmp

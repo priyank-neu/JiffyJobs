@@ -1,0 +1,68 @@
+name: Backend CD
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-cd.yml'
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
+    branches:
+      - main
+      - development
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: ./backend
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+
+      - name: Build
+        working-directory: ./backend
+        run: npm run build
+
+      # Deploy to Render (Primary deployment platform)
+      - name: Deploy to Render (Production)
+        if: github.ref == 'refs/heads/main'
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+        continue-on-error: true
+
+      - name: Deploy to Render (Staging)
+        if: github.ref == 'refs/heads/development'
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID_STAGING || secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+        continue-on-error: true
+
+      # Note: Database migrations are handled by Render's build command
+      # Build command should include: npm ci && npm run build && npx prisma migrate deploy
+

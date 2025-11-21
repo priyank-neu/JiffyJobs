@@ -63,6 +63,7 @@ export const signup = async (
       email: user.email,
       name: user.name,
       isVerified: user.isVerified,
+      role: user.role,
     },
   };
 };
@@ -102,6 +103,7 @@ export const login = async (email: string, password: string) => {
       email: user.email,
       name: user.name,
       isVerified: user.isVerified,
+      role: user.role,
     },
   };
 };

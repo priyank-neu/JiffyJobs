@@ -8,6 +8,11 @@ import paymentRoutes from './payment.routes';
 import taskExecutionRoutes from './taskExecution.routes';
 import chatRoutes from './chat.routes';
 import notificationRoutes from './notification.routes';
+import reviewRoutes from './review.routes';
+import reportRoutes from './report.routes';
+import moderationRoutes from './moderation.routes';
+import userRoutes from './user.routes';
+import profileRoutes from './profile.routes';
  
 const router = Router();
  
@@ -21,6 +26,11 @@ router.use('/payments', paymentRoutes);
 router.use('/tasks', taskExecutionRoutes);
 router.use('/chat', chatRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/reviews', reviewRoutes);
+router.use('/reports', reportRoutes);
+router.use('/moderation', moderationRoutes);
+router.use('/admin/users', userRoutes);
+router.use('/profile', profileRoutes);
  
 // Health check
 router.get('/health', (req, res) => {

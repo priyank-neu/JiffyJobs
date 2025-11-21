@@ -12,12 +12,42 @@ export interface AuthenticatedSocket extends Socket {
  * Initialize Socket.IO server with authentication
  */
 export const initializeSocketIO = (httpServer: HTTPServer): SocketIOServer => {
-  const io = new SocketIOServer(httpServer, {
-    cors: {
-      origin: config.FRONTEND_URL,
-      credentials: true,
-      methods: ['GET', 'POST'],
+  // CORS configuration for Socket.IO - allow Vercel preview URLs and production
+  const allowedOrigins = [
+    config.FRONTEND_URL,
+    'http://localhost:5173',
+    'http://localhost:3000',
+    /^https:\/\/.*\.vercel\.app$/,
+  ];
+
+  const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      const isAllowed = allowedOrigins.some(allowedOrigin => {
+        if (typeof allowedOrigin === 'string') {
+          return origin === allowedOrigin;
+        }
+        if (allowedOrigin instanceof RegExp) {
+          return allowedOrigin.test(origin);
+        }
+        return false;
+      });
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     },
+    credentials: true,
+    methods: ['GET', 'POST'],
+  };
+
+  const io = new SocketIOServer(httpServer, {
+    cors: corsOptions,
     path: '/socket.io',
   });
 

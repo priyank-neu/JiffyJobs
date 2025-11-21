@@ -358,5 +358,331 @@ export const paymentAPI = {
   },
 };
 
+// Review API
+export const reviewAPI = {
+  // Create a review
+  createReview: async (data: {
+    contractId: string;
+    revieweeId: string;
+    rating: number;
+    comment?: string;
+    tags?: string[];
+  }): Promise<any> => {
+    const response = await api.post('/reviews', data);
+    return response.data;
+  },
+
+  // Update a review
+  updateReview: async (reviewId: string, data: {
+    rating?: number;
+    comment?: string;
+    tags?: string[];
+  }): Promise<any> => {
+    const response = await api.put(`/reviews/${reviewId}`, data);
+    return response.data;
+  },
+
+  // Delete a review
+  deleteReview: async (reviewId: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/reviews/${reviewId}`);
+    return response.data;
+  },
+
+  // Get reviews for a user
+  getUserReviews: async (userId: string, page: number = 1, limit: number = 20): Promise<{
+    reviews: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> => {
+    const response = await api.get(`/reviews/user/${userId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  // Get review statistics for a user
+  getUserReviewStats: async (userId: string): Promise<{
+    averageRating: number;
+    totalCount: number;
+    commonTags: string[];
+  }> => {
+    const response = await api.get(`/reviews/user/${userId}/stats`);
+    return response.data;
+  },
+
+  // Get review for a specific contract
+  getContractReview: async (contractId: string): Promise<any> => {
+    const response = await api.get(`/reviews/contract/${contractId}`);
+    return response.data;
+  },
+
+  // Check if user can review a contract
+  canUserReviewContract: async (contractId: string): Promise<{
+    canReview: boolean;
+    reason?: string;
+  }> => {
+    const response = await api.get(`/reviews/contract/${contractId}/can-review`);
+    return response.data;
+  },
+
+  // Report a review
+  reportReview: async (reviewId: string, reason?: string): Promise<any> => {
+    const response = await api.post(`/reviews/${reviewId}/report`, { reason });
+    return response.data;
+  },
+};
+
+// Report API
+export const reportAPI = {
+  createReport: async (data: {
+    type: string;
+    targetId: string;
+    reason: string;
+    evidence?: string[];
+  }): Promise<{ message: string; report: any }> => {
+    const response = await api.post('/reports', data);
+    return response.data;
+  },
+
+  getReports: async (params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ reports: any[]; pagination: any }> => {
+    const response = await api.get('/reports', { params });
+    return response.data;
+  },
+
+  getReportById: async (type: string, reportId: string): Promise<{ message: string; report: any }> => {
+    const response = await api.get(`/reports/${type}/${reportId}`);
+    return response.data;
+  },
+
+  resolveReport: async (
+    type: string,
+    reportId: string,
+    status: string,
+    resolutionNotes?: string
+  ): Promise<{ message: string; report: any }> => {
+    const response = await api.patch(`/reports/${type}/${reportId}/resolve`, {
+      status,
+      resolutionNotes,
+    });
+    return response.data;
+  },
+
+  getReportMetrics: async (): Promise<{ message: string; metrics: any }> => {
+    const response = await api.get('/reports/metrics');
+    return response.data;
+  },
+};
+
+// Moderation API (Admin only)
+export const moderationAPI = {
+  suspendUser: async (userId: string, reason?: string): Promise<{ message: string; user: any }> => {
+    const response = await api.post(`/moderation/users/${userId}/suspend`, { reason });
+    return response.data;
+  },
+
+  reactivateUser: async (userId: string): Promise<{ message: string; user: any }> => {
+    const response = await api.post(`/moderation/users/${userId}/reactivate`);
+    return response.data;
+  },
+
+  hideReview: async (reviewId: string, reason?: string): Promise<{ message: string; review: any }> => {
+    const response = await api.post(`/moderation/reviews/${reviewId}/hide`, { reason });
+    return response.data;
+  },
+
+  unhideReview: async (reviewId: string): Promise<{ message: string; review: any }> => {
+    const response = await api.post(`/moderation/reviews/${reviewId}/unhide`);
+    return response.data;
+  },
+
+  lockTask: async (taskId: string, reason: string, reportId?: string): Promise<{ message: string; task: any }> => {
+    const response = await api.post(`/moderation/tasks/${taskId}/lock`, { reason, reportId });
+    return response.data;
+  },
+
+  unlockTask: async (taskId: string): Promise<{ message: string; task: any }> => {
+    const response = await api.post(`/moderation/tasks/${taskId}/unlock`);
+    return response.data;
+  },
+
+  lockContract: async (
+    contractId: string,
+    reason: string,
+    reportId?: string
+  ): Promise<{ message: string; contract: any }> => {
+    const response = await api.post(`/moderation/contracts/${contractId}/lock`, { reason, reportId });
+    return response.data;
+  },
+
+  unlockContract: async (contractId: string): Promise<{ message: string; contract: any }> => {
+    const response = await api.post(`/moderation/contracts/${contractId}/unlock`);
+    return response.data;
+  },
+
+  triggerRefund: async (
+    contractId: string,
+    reason: string,
+    amount?: number,
+    reportId?: string
+  ): Promise<{ message: string; contract: any }> => {
+    const response = await api.post(`/moderation/contracts/${contractId}/refund`, {
+      reason,
+      amount,
+      reportId,
+    });
+    return response.data;
+  },
+
+  getAuditLogs: async (params?: {
+    page?: number;
+    limit?: number;
+    adminId?: string;
+    entityType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ logs: any[]; pagination: any }> => {
+    const response = await api.get('/moderation/audit-logs', { params });
+    return response.data;
+  },
+};
+
+// Admin User API
+export const adminUserAPI = {
+  getAllUsers: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    accountStatus?: string;
+    role?: string;
+  }): Promise<{ users: any[]; pagination: any }> => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+
+  getUserById: async (userId: string): Promise<{ user: any }> => {
+    const response = await api.get(`/admin/users/${userId}`);
+    return response.data;
+  },
+};
+
+// Profile API
+export const profileAPI = {
+  getMyProfile: async (): Promise<{ message: string; profile: any }> => {
+    const response = await api.get('/profile/me');
+    return response.data;
+  },
+
+  updateProfile: async (data: {
+    name?: string;
+    bio?: string;
+    avatarUrl?: string;
+    preferredHourlyRate?: number;
+  }): Promise<{ message: string; profile: any }> => {
+    const response = await api.patch('/profile/me', data);
+    return response.data;
+  },
+
+  getPublicProfile: async (userId: string): Promise<{ message: string; profile: any }> => {
+    const response = await api.get(`/profile/${userId}`);
+    return response.data;
+  },
+
+  setNeighborhood: async (data: {
+    latitude: number;
+    longitude: number;
+    address: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  }): Promise<{ message: string; neighborhood: any }> => {
+    const response = await api.post('/profile/neighborhood', data);
+    return response.data;
+  },
+
+  verifyNeighborhoodByGeo: async (latitude: number, longitude: number): Promise<{
+    message: string;
+    verified: boolean;
+    distance: number;
+  }> => {
+    const response = await api.post('/profile/neighborhood/verify/geo', {
+      latitude,
+      longitude,
+    });
+    return response.data;
+  },
+
+  generateNeighborhoodOTP: async (): Promise<{
+    message: string;
+    token: string;
+    expiresAt: string;
+    otp?: string; // For testing only
+  }> => {
+    const response = await api.post('/profile/neighborhood/verify/otp/generate');
+    return response.data;
+  },
+
+  verifyNeighborhoodByOTP: async (token: string, otp: string): Promise<{
+    message: string;
+    verified: boolean;
+  }> => {
+    const response = await api.post('/profile/neighborhood/verify/otp', {
+      token,
+      otp,
+    });
+    return response.data;
+  },
+
+  getAllSkills: async (): Promise<{ message: string; skills: Array<{ skillId: string; name: string; category: string; description: string | null }> }> => {
+    const response = await api.get('/profile/skills');
+    return response.data;
+  },
+
+  addSkill: async (data: {
+    skillId: string;
+    level?: string;
+    experienceYears?: number;
+  }): Promise<{ message: string; userSkill: any }> => {
+    const response = await api.post('/profile/skills', data);
+    return response.data;
+  },
+
+  removeSkill: async (skillId: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/profile/skills/${skillId}`);
+    return response.data;
+  },
+};
+
+// Upload API
+export const uploadAPI = {
+  getPresignedUrl: async (data: {
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+  }): Promise<{
+    uploadUrl: string;
+    fileUrl: string;
+    key: string;
+    isBase64Upload: boolean;
+  }> => {
+    const response = await api.post('/uploads/presigned-url', data);
+    return response.data;
+  },
+};
+
 export default api;
  

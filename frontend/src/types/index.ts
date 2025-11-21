@@ -3,6 +3,7 @@ export interface User {
   email: string;
   name?: string;
   isVerified: boolean;
+  role?: 'POSTER' | 'HELPER' | 'ADMIN';
 }
 
 export interface AuthResponse {

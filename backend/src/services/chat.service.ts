@@ -526,7 +526,7 @@ export const getUserThreads = async (
 
   // For each thread, get unread count and last message
   const threadsWithMetadata = await Promise.all(
-    threads.map(async (thread) => {
+    threads.map(async (thread: any) => {
       // Get unread count (messages where receiver is current user and readAt is null)
       const unreadCount = await prisma.chatMessage.count({
         where: {
