@@ -323,5 +323,35 @@ export const notificationAPI = {
   },
 };
 
+// Payment API
+export const paymentAPI = {
+  // Stripe Connect
+  createConnectAccount: async (): Promise<{ accountId: string; onboardingUrl: string }> => {
+    const response = await api.post('/payments/connect/create');
+    return response.data;
+  },
+
+  getConnectAccountStatus: async (): Promise<{ status: { detailsSubmitted: boolean; chargesEnabled: boolean; payoutsEnabled: boolean } }> => {
+    const response = await api.get('/payments/connect/status');
+    return response.data;
+  },
+
+  // Payment operations
+  confirmPayment: async (paymentIntentId: string): Promise<{ message: string }> => {
+    const response = await api.post('/payments/confirm', { paymentIntentId });
+    return response.data;
+  },
+
+  getPaymentHistory: async (contractId: string): Promise<{ payments: any[] }> => {
+    const response = await api.get(`/payments/history/${contractId}`);
+    return response.data;
+  },
+
+  getPublishableKey: async (): Promise<{ publishableKey: string }> => {
+    const response = await api.get('/payments/publishable-key');
+    return response.data;
+  },
+};
+
 export default api;
  
