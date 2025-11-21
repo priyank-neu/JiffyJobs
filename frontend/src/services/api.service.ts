@@ -579,5 +579,110 @@ export const adminUserAPI = {
   },
 };
 
+// Profile API
+export const profileAPI = {
+  getMyProfile: async (): Promise<{ message: string; profile: any }> => {
+    const response = await api.get('/profile/me');
+    return response.data;
+  },
+
+  updateProfile: async (data: {
+    name?: string;
+    bio?: string;
+    avatarUrl?: string;
+    preferredHourlyRate?: number;
+  }): Promise<{ message: string; profile: any }> => {
+    const response = await api.patch('/profile/me', data);
+    return response.data;
+  },
+
+  getPublicProfile: async (userId: string): Promise<{ message: string; profile: any }> => {
+    const response = await api.get(`/profile/${userId}`);
+    return response.data;
+  },
+
+  setNeighborhood: async (data: {
+    latitude: number;
+    longitude: number;
+    address: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  }): Promise<{ message: string; neighborhood: any }> => {
+    const response = await api.post('/profile/neighborhood', data);
+    return response.data;
+  },
+
+  verifyNeighborhoodByGeo: async (latitude: number, longitude: number): Promise<{
+    message: string;
+    verified: boolean;
+    distance: number;
+  }> => {
+    const response = await api.post('/profile/neighborhood/verify/geo', {
+      latitude,
+      longitude,
+    });
+    return response.data;
+  },
+
+  generateNeighborhoodOTP: async (): Promise<{
+    message: string;
+    token: string;
+    expiresAt: string;
+    otp?: string; // For testing only
+  }> => {
+    const response = await api.post('/profile/neighborhood/verify/otp/generate');
+    return response.data;
+  },
+
+  verifyNeighborhoodByOTP: async (token: string, otp: string): Promise<{
+    message: string;
+    verified: boolean;
+  }> => {
+    const response = await api.post('/profile/neighborhood/verify/otp', {
+      token,
+      otp,
+    });
+    return response.data;
+  },
+
+  getAllSkills: async (): Promise<{ message: string; skills: Array<{ skillId: string; name: string; category: string; description: string | null }> }> => {
+    const response = await api.get('/profile/skills');
+    return response.data;
+  },
+
+  addSkill: async (data: {
+    skillId: string;
+    level?: string;
+    experienceYears?: number;
+  }): Promise<{ message: string; userSkill: any }> => {
+    const response = await api.post('/profile/skills', data);
+    return response.data;
+  },
+
+  removeSkill: async (skillId: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/profile/skills/${skillId}`);
+    return response.data;
+  },
+};
+
+// Upload API
+export const uploadAPI = {
+  getPresignedUrl: async (data: {
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+  }): Promise<{
+    uploadUrl: string;
+    fileUrl: string;
+    key: string;
+    isBase64Upload: boolean;
+  }> => {
+    const response = await api.post('/uploads/presigned-url', data);
+    return response.data;
+  },
+};
+
 export default api;
  

@@ -20,6 +20,7 @@ import TaskDiscovery from './pages/TaskDiscovery';
 import MyBids from './pages/MyBids';
 import Settings from './pages/Settings';
 import AdminDashboard from './components/admin/AdminDashboard';
+import PublicProfile from './components/profile/PublicProfile';
 
 function App() {
   return (
@@ -106,6 +107,10 @@ function App() {
                     <AdminDashboard />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="/profile/:userId"
+                element={<PublicProfile />}
               />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
