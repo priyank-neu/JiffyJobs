@@ -8,6 +8,7 @@ import paymentRoutes from './payment.routes';
 import taskExecutionRoutes from './taskExecution.routes';
 import chatRoutes from './chat.routes';
 import notificationRoutes from './notification.routes';
+import reviewRoutes from './review.routes';
  
 const router = Router();
  
@@ -21,6 +22,7 @@ router.use('/payments', paymentRoutes);
 router.use('/tasks', taskExecutionRoutes);
 router.use('/chat', chatRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/reviews', reviewRoutes);
  
 // Health check
 router.get('/health', (req, res) => {

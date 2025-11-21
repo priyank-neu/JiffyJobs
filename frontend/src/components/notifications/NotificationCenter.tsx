@@ -14,12 +14,13 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
-import { Notification } from '@/types/notification.types';
+import { Notification, NotificationType } from '@/types/notification.types';
 import { notificationAPI } from '@/services/api.service';
 import { useSocket } from '@/contexts/SocketContext';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useNavigate } from 'react-router-dom';
+import ReviewPromptDialog from '@/components/reviews/ReviewPromptDialog';
 
 dayjs.extend(relativeTime);
 
@@ -39,6 +40,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [reviewPromptOpen, setReviewPromptOpen] = useState(false);
+  const [selectedReviewNotification, setSelectedReviewNotification] = useState<Notification | null>(null);
 
   // Load notifications
   const loadNotifications = useCallback(async (pageNum: number = 1) => {
@@ -108,6 +111,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       }
     }
 
+    // Handle review request notifications
+    if (notification.type === NotificationType.REVIEW_REQUESTED) {
+      setSelectedReviewNotification(notification);
+      setReviewPromptOpen(true);
+      return;
+    }
+
     // Navigate based on notification type
     if (notification.relatedTaskId) {
       navigate(`/task/${notification.relatedTaskId}`);
@@ -116,6 +126,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
     if (onNotificationClick) {
       onNotificationClick(notification);
+    }
+  };
+
+  const handleReviewSubmitted = () => {
+    if (selectedReviewNotification) {
+      // Refresh notifications to update the list
+      loadNotifications(1);
     }
   };
 
@@ -222,6 +239,17 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           )}
         </Box>
       </Box>
+
+      {/* Review Prompt Dialog */}
+      <ReviewPromptDialog
+        open={reviewPromptOpen}
+        notification={selectedReviewNotification}
+        onClose={() => {
+          setReviewPromptOpen(false);
+          setSelectedReviewNotification(null);
+        }}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
     </Drawer>
   );
 };

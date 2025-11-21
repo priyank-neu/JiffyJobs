@@ -62,6 +62,11 @@ model User {
   
   // Task execution timeline
   timelineEvents TaskTimeline[]
+  
+  // Reviews
+  reviewsGiven    Review[]        @relation("Reviewer")
+  reviewsReceived Review[]        @relation("Reviewee")
+  reviewReports   ReviewReport[]
  
   @@map("users")
 
@@ -394,6 +399,8 @@ model Contract {
   task          Task      @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 
   payments      Payment[]
+  
+  reviews       Review[]
  
   @@index([taskId])
 
@@ -732,6 +739,85 @@ enum NotificationType {
   HELPER_ASSIGNED
   TASK_UPDATED
   CONTRACT_CREATED
+  REVIEW_REQUESTED
   OTHER
+}
+
+enum ReviewTag {
+  PUNCTUAL
+  CAREFUL
+  COMMUNICATIVE
+  PROFESSIONAL
+  FRIENDLY
+  EFFICIENT
+  RELIABLE
+  SKILLED
+  CLEAN
+  RESPONSIVE
+}
+
+model Review {
+  reviewId      String      @id @default(uuid())
+  
+  contractId    String
+  reviewerId    String      // User who wrote the review
+  revieweeId    String      // User being reviewed
+  
+  rating        Int         // 1-5 stars
+  comment       String?     @db.Text // Optional comment, max 300 chars
+  tags          ReviewTag[] // Up to 3 tags
+  
+  isEdited      Boolean     @default(false)
+  editedAt      DateTime?
+  
+  isHidden      Boolean     @default(false) // Hidden by moderation
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  contract      Contract    @relation(fields: [contractId], references: [contractId], onDelete: Cascade)
+  reviewer      User        @relation("Reviewer", fields: [reviewerId], references: [userId], onDelete: Cascade)
+  reviewee      User        @relation("Reviewee", fields: [revieweeId], references: [userId], onDelete: Cascade)
+  
+  reports       ReviewReport[]
+  
+  @@unique([contractId, reviewerId]) // One review per contract per reviewer
+  @@index([contractId])
+  @@index([reviewerId])
+  @@index([revieweeId])
+  @@index([rating])
+  @@index([createdAt])
+  
+  @@map("reviews")
+}
+
+model ReviewReport {
+  reportId      String      @id @default(uuid())
+  
+  reviewId     String
+  reporterId   String
+  reason       String?      @db.Text
+  
+  status       ReportStatus @default(PENDING)
+  
+  createdAt    DateTime     @default(now())
+  reviewedAt   DateTime?
+  reviewedBy   String?      // Admin userId who reviewed
+  
+  review       Review       @relation(fields: [reviewId], references: [reviewId], onDelete: Cascade)
+  reporter     User         @relation(fields: [reporterId], references: [userId], onDelete: Cascade)
+  
+  @@index([reviewId])
+  @@index([reporterId])
+  @@index([status])
+  
+  @@map("review_reports")
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
 }
  
