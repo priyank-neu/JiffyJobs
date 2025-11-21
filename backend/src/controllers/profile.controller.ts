@@ -237,6 +237,31 @@ export const verifyNeighborhoodByOTP = async (req: AuthRequest, res: Response): 
 };
 
 /**
+ * Get all available skills
+ */
+export const getAllSkills = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const skills = await prisma.skill.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        skillId: true,
+        name: true,
+        category: true,
+        description: true,
+      },
+    });
+
+    res.status(200).json({
+      message: 'Skills retrieved successfully',
+      skills,
+    });
+  } catch (error) {
+    console.error('Error fetching skills:', error);
+    res.status(500).json({ error: 'Failed to fetch skills' });
+  }
+};
+
+/**
  * Add skill to user profile
  */
 export const addSkill = async (req: AuthRequest, res: Response): Promise<void> => {

@@ -25,6 +25,7 @@ router.post('/neighborhood/verify/otp/generate', profileController.generateNeigh
 router.post('/neighborhood/verify/otp', profileController.verifyNeighborhoodByOTP);
 
 // Manage skills
+router.get('/skills', profileController.getAllSkills);
 router.post('/skills', profileController.addSkill);
 router.delete('/skills/:skillId', profileController.removeSkill);
 
