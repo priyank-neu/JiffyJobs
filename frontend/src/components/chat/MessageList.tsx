@@ -14,7 +14,6 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FlagIcon from '@mui/icons-material/Flag';
 import { ChatMessage } from '@/types/chat.types';
 import { useAuth } from '@/contexts/AuthContext';
-import { chatAPI } from '@/services/api.service';
 import ReportForm from '../reports/ReportForm';
 import { ReportType } from '@/types/report.types';
 import dayjs from 'dayjs';
