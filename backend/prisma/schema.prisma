@@ -1,0 +1,737 @@
+generator client {
+
+  provider = "prisma-client-js"
+
+}
+ 
+datasource db {
+
+  provider = "postgresql"
+
+  url      = env("DATABASE_URL")
+
+}
+ 
+model User {
+
+  userId          String          @id @default(uuid())
+
+  email           String          @unique
+
+  passwordHash    String
+
+  name            String?
+
+  phoneNumber     String?
+
+  accountStatus   AccountStatus   @default(ACTIVE)
+
+  isVerified      Boolean         @default(false)
+
+  createdAt       DateTime        @default(now())
+
+  updatedAt       DateTime        @updatedAt
+
+  // Stripe Connect fields
+  stripeAccountId String?         @unique
+  stripeOnboardingComplete Boolean @default(false)
+
+  bids            Bid[]
+
+  contracts       Contract[]      @relation("HelperContracts")
+
+  posterContracts Contract[]      @relation("PosterContracts")
+
+  passwordResets  PasswordReset[]
+
+  assignedTasks   Task[]          @relation("AssignedTasks")
+
+  postedTasks     Task[]          @relation("PostedTasks")
+
+  userSkills      UserSkill[]
+
+  verifications   Verification[]
+
+  // Chat relations
+  sentMessages    ChatMessage[]      @relation("MessageSender")
+  receivedMessages ChatMessage[]     @relation("MessageReceiver")
+  posterThreads   ChatThread[]       @relation("PosterThreads")
+  helperThreads   ChatThread[]        @relation("HelperThreads")
+  notifications   Notification[]
+  messageReports  MessageReport[]
+  
+  // Task execution timeline
+  timelineEvents TaskTimeline[]
+ 
+  @@map("users")
+
+}
+ 
+model Verification {
+
+  verificationId   String           @id @default(uuid())
+
+  userId           String
+
+  verificationType VerificationType
+
+  token            String           @unique
+
+  expiresAt        DateTime
+
+  isUsed           Boolean          @default(false)
+
+  createdAt        DateTime         @default(now())
+
+  user             User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
+ 
+  @@index([userId])
+
+  @@index([token])
+
+  @@map("verifications")
+
+}
+ 
+model PasswordReset {
+
+  resetId   String   @id @default(uuid())
+
+  userId    String
+
+  token     String   @unique
+
+  expiresAt DateTime
+
+  isUsed    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+ 
+  @@index([userId])
+
+  @@index([token])
+
+  @@map("password_resets")
+
+}
+ 
+model Task {
+
+  taskId           String       @id @default(uuid())
+
+  title            String
+
+  description      String
+
+  category         TaskCategory
+
+  budget           Decimal      @db.Decimal(10, 2)
+
+  budgetMin        Decimal?     @db.Decimal(10, 2)
+
+  budgetMax        Decimal?     @db.Decimal(10, 2)
+
+  status           TaskStatus   @default(OPEN)
+
+  locationId       String?
+
+  addressMasked    String?
+
+  taskDate         DateTime?
+
+  estimatedHours   Int?
+
+  posterId         String
+
+  assignedHelperId String?
+
+  createdAt        DateTime     @default(now())
+
+  updatedAt        DateTime     @updatedAt
+
+  bids             Bid[]
+
+  contract         Contract?
+
+  photos           TaskPhoto[]
+
+  taskSkills       TaskSkill[]
+
+  chatThreads      ChatThread[]
+
+  assignedHelper   User?        @relation("AssignedTasks", fields: [assignedHelperId], references: [userId], onDelete: Cascade)
+
+  location         Location?    @relation(fields: [locationId], references: [locationId])
+
+  poster           User         @relation("PostedTasks", fields: [posterId], references: [userId], onDelete: Cascade)
+
+  timeline       TaskTimeline[]
+ 
+  @@index([posterId])
+
+  @@index([status])
+
+  @@index([category])
+
+  @@index([taskDate])
+
+  @@map("tasks")
+
+}
+ 
+model TaskPhoto {
+
+  photoId      String   @id @default(uuid())
+
+  taskId       String
+
+  photoUrl     String
+
+  thumbnailUrl String?
+
+  uploadedAt   DateTime @default(now())
+
+  task         Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+ 
+  @@index([taskId])
+
+  @@map("task_photos")
+
+}
+ 
+model Location {
+
+  locationId String  @id @default(uuid())
+
+  latitude   Decimal @db.Decimal(10, 8)
+
+  longitude  Decimal @db.Decimal(11, 8)
+
+  address    String
+
+  city       String?
+
+  state      String?
+
+  zipCode    String?
+
+  country    String  @default("US")
+
+  tasks      Task[]
+ 
+  @@index([latitude, longitude])
+
+  @@map("locations")
+
+}
+ 
+model Skill {
+
+  skillId     String       @id @default(uuid())
+
+  name        String       @unique
+
+  category    TaskCategory
+
+  description String?
+
+  createdAt   DateTime     @default(now())
+
+  updatedAt   DateTime     @updatedAt
+
+  taskSkills  TaskSkill[]
+
+  userSkills  UserSkill[]
+ 
+  @@index([category])
+
+  @@map("skills")
+
+}
+ 
+model UserSkill {
+
+  userSkillId     String     @id @default(uuid())
+
+  userId          String
+
+  skillId         String
+
+  level           SkillLevel @default(BEGINNER)
+
+  experienceYears Int?       @default(0)
+
+  isVerified      Boolean    @default(false)
+
+  createdAt       DateTime   @default(now())
+
+  updatedAt       DateTime   @updatedAt
+
+  skill           Skill      @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+
+  user            User       @relation(fields: [userId], references: [userId], onDelete: Cascade)
+ 
+  @@unique([userId, skillId])
+
+  @@index([userId])
+
+  @@index([skillId])
+
+  @@map("user_skills")
+
+}
+ 
+model TaskSkill {
+
+  taskSkillId   String     @id @default(uuid())
+
+  taskId        String
+
+  skillId       String
+
+  requiredLevel SkillLevel @default(BEGINNER)
+
+  isRequired    Boolean    @default(true)
+
+  createdAt     DateTime   @default(now())
+
+  skill         Skill      @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+
+  task          Task       @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+ 
+  @@unique([taskId, skillId])
+
+  @@index([taskId])
+
+  @@index([skillId])
+
+  @@map("task_skills")
+
+}
+ 
+model Bid {
+
+  bidId     String    @id @default(uuid())
+
+  taskId    String
+
+  helperId  String
+
+  amount    Decimal   @db.Decimal(10, 2)
+
+  note      String?
+
+  status    BidStatus @default(PENDING)
+
+  createdAt DateTime  @default(now())
+
+  updatedAt DateTime  @updatedAt
+
+  helper    User      @relation(fields: [helperId], references: [userId], onDelete: Cascade)
+
+  task      Task      @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  contract  Contract?
+ 
+  @@unique([taskId, helperId])
+
+  @@index([taskId])
+
+  @@index([helperId])
+
+  @@index([status])
+
+  @@map("bids")
+
+}
+ 
+model Contract {
+
+  contractId    String    @id @default(uuid())
+
+  taskId        String    @unique
+
+  helperId      String
+
+  posterId      String
+
+  agreedAmount  Decimal   @db.Decimal(10, 2)
+
+  acceptedBidId String    @unique
+
+  startDate     DateTime?
+
+  endDate       DateTime?
+
+  terms         String?
+
+  isActive      Boolean   @default(true)
+
+  // Payment fields
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentIntentId String?      @unique
+  payoutId       String?       @unique
+  platformFee   Decimal?      @db.Decimal(10, 2)
+  helperAmount  Decimal?      @db.Decimal(10, 2)
+  refundId      String?       @unique
+  refundAmount  Decimal?      @db.Decimal(10, 2)
+  autoReleaseAt DateTime?
+  paymentCompletedAt DateTime?
+  payoutReleasedAt DateTime?
+
+  createdAt     DateTime  @default(now())
+
+  updatedAt     DateTime  @updatedAt
+
+  acceptedBid   Bid       @relation(fields: [acceptedBidId], references: [bidId], onDelete: Cascade)
+
+  helper        User      @relation("HelperContracts", fields: [helperId], references: [userId], onDelete: Cascade)
+
+  poster        User      @relation("PosterContracts", fields: [posterId], references: [userId], onDelete: Cascade)
+
+  task          Task      @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  payments      Payment[]
+ 
+  @@index([taskId])
+
+  @@index([helperId])
+
+  @@index([posterId])
+
+  @@index([isActive])
+
+  @@index([paymentStatus])
+
+  @@index([paymentIntentId])
+
+  @@map("contracts")
+
+}
+
+model Payment {
+
+  paymentId     String    @id @default(uuid())
+
+  contractId    String
+
+  type          PaymentType
+
+  amount        Decimal   @db.Decimal(10, 2)
+
+  status        PaymentStatus
+
+  stripeId      String?   @unique
+
+  receiptUrl    String?
+
+  metadata      String?   // JSON string for additional data
+
+  createdAt     DateTime  @default(now())
+
+  updatedAt     DateTime  @updatedAt
+
+  contract      Contract  @relation(fields: [contractId], references: [contractId], onDelete: Cascade)
+
+  @@index([contractId])
+
+  @@index([stripeId])
+
+  @@index([status])
+
+  @@map("payments")
+
+}
+ 
+enum UserRole {
+
+  POSTER
+
+  HELPER
+
+  ADMIN
+
+}
+ 
+enum AccountStatus {
+
+  ACTIVE
+
+  SUSPENDED
+
+  DELETED
+
+}
+ 
+enum VerificationType {
+
+  EMAIL
+
+  PHONE
+
+  ID_DOCUMENT
+
+}
+ 
+enum TaskStatus {
+
+  OPEN
+
+  IN_BIDDING
+
+  ASSIGNED
+
+  IN_PROGRESS
+
+  AWAITING_CONFIRMATION
+
+  DISPUTED
+
+  COMPLETED
+
+  CANCELLED
+
+}
+ 
+enum TaskCategory {
+
+  HOME_REPAIR
+
+  CLEANING
+
+  MOVING
+
+  DELIVERY
+
+  ASSEMBLY
+
+  YARD_WORK
+
+  PET_CARE
+
+  TECH_SUPPORT
+
+  TUTORING
+
+  OTHER
+
+}
+ 
+enum SkillLevel {
+
+  BEGINNER
+
+  INTERMEDIATE
+
+  ADVANCED
+
+  EXPERT
+
+}
+ 
+enum BidStatus {
+
+  PENDING
+
+  ACCEPTED
+
+  REJECTED
+
+  WITHDRAWN
+
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentType {
+  CHARGE
+  PAYOUT
+  REFUND
+}
+
+enum TimelineEventType {
+  TASK_CREATED
+  BID_PLACED
+  BID_ACCEPTED
+  TASK_ASSIGNED
+  EN_ROUTE
+  WORK_STARTED
+  WORK_COMPLETED
+  COMPLETION_CONFIRMED
+  AUTO_CONFIRMED
+  TASK_CANCELLED
+  RESCHEDULE_REQUESTED
+  RESCHEDULE_ACCEPTED
+}
+
+model TaskTimeline {
+  timelineId String            @id @default(uuid())
+  taskId     String
+  task       Task              @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  
+  eventType  TimelineEventType
+  userId     String?
+  user       User?             @relation(fields: [userId], references: [userId])
+  
+  oldStatus  TaskStatus?
+  newStatus  TaskStatus?
+  notes      String?
+  
+  createdAt  DateTime          @default(now())
+
+  @@index([taskId, createdAt])
+  @@map("task_timeline")
+}
+
+model ChatThread {
+
+  threadId    String        @id @default(uuid())
+
+  taskId      String
+
+  posterId    String
+
+  helperId    String
+
+  createdAt   DateTime      @default(now())
+
+  updatedAt   DateTime      @updatedAt
+
+  task        Task          @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  poster      User          @relation("PosterThreads", fields: [posterId], references: [userId], onDelete: Cascade)
+
+  helper      User          @relation("HelperThreads", fields: [helperId], references: [userId], onDelete: Cascade)
+
+  messages    ChatMessage[]
+ 
+  @@unique([taskId, helperId])
+
+  @@index([taskId])
+
+  @@index([posterId])
+
+  @@index([helperId])
+
+  @@map("chat_threads")
+
+}
+
+model ChatMessage {
+
+  messageId   String        @id @default(uuid())
+
+  threadId    String
+
+  senderId    String
+
+  receiverId  String
+
+  body        String        @db.Text
+
+  readAt      DateTime?
+
+  isDeleted   Boolean       @default(false)
+
+  createdAt   DateTime      @default(now())
+
+  thread      ChatThread    @relation(fields: [threadId], references: [threadId], onDelete: Cascade)
+
+  sender      User          @relation("MessageSender", fields: [senderId], references: [userId], onDelete: Cascade)
+
+  receiver    User          @relation("MessageReceiver", fields: [receiverId], references: [userId], onDelete: Cascade)
+
+  reports     MessageReport[]
+ 
+  @@index([threadId])
+
+  @@index([senderId])
+
+  @@index([receiverId])
+
+  @@index([createdAt])
+
+  @@map("chat_messages")
+
+}
+
+model Notification {
+
+  notificationId String          @id @default(uuid())
+
+  userId         String
+
+  type           NotificationType
+
+  title          String
+
+  message        String          @db.Text
+
+  isRead         Boolean         @default(false)
+
+  relatedTaskId  String?
+
+  relatedThreadId String?
+
+  relatedBidId   String?
+
+  metadata       Json?
+
+  createdAt      DateTime        @default(now())
+
+  readAt         DateTime?
+
+  user           User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
+ 
+  @@index([userId])
+
+  @@index([isRead])
+
+  @@index([createdAt])
+
+  @@map("notifications")
+
+}
+
+model MessageReport {
+
+  reportId   String        @id @default(uuid())
+
+  messageId  String
+
+  reporterId String
+
+  reason     String?       @db.Text
+
+  createdAt  DateTime      @default(now())
+
+  message    ChatMessage   @relation(fields: [messageId], references: [messageId], onDelete: Cascade)
+
+  reporter   User          @relation(fields: [reporterId], references: [userId], onDelete: Cascade)
+ 
+  @@index([messageId])
+
+  @@index([reporterId])
+
+  @@map("message_reports")
+
+}
+
+enum NotificationType {
+  NEW_MESSAGE
+  BID_ACCEPTED
+  HELPER_ASSIGNED
+  TASK_UPDATED
+  CONTRACT_CREATED
+  OTHER
+}
+ 
