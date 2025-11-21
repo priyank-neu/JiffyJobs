@@ -31,8 +31,11 @@ import {
 import {
   Visibility,
   Refresh,
+  PersonOff,
+  Lock as LockIcon,
+  VisibilityOff,
 } from '@mui/icons-material';
-import { reportAPI } from '@/services/api.service';
+import { reportAPI, moderationAPI } from '@/services/api.service';
 import { Report, ReportType, ReportStatus } from '@/types/report.types';
 
 interface AdminReportsQueueProps {
@@ -48,6 +51,10 @@ const AdminReportsQueue: React.FC<AdminReportsQueueProps> = ({ onAction }) => {
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [resolving, setResolving] = useState(false);
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<string | null>(null);
+  const [actionReason, setActionReason] = useState('');
+  const [performingAction, setPerformingAction] = useState(false);
 
   // Filters
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -372,10 +379,14 @@ const AdminReportsQueue: React.FC<AdminReportsQueueProps> = ({ onAction }) => {
       </Dialog>
 
       {/* Resolve Dialog */}
-      <Dialog open={resolveDialogOpen} onClose={() => setResolveDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={resolveDialogOpen} onClose={() => setResolveDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Resolve Report</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            <Alert severity="info">
+              You can resolve this report with notes, or take additional moderation actions below.
+            </Alert>
+
             <FormControl fullWidth>
               <InputLabel>Resolution Status</InputLabel>
               <Select
@@ -401,6 +412,67 @@ const AdminReportsQueue: React.FC<AdminReportsQueueProps> = ({ onAction }) => {
               onChange={(e) => setResolutionNotes(e.target.value)}
               placeholder="Add any notes about how this report was resolved..."
             />
+
+            {/* Moderation Actions */}
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Additional Actions (Optional)
+              </Typography>
+              <Stack spacing={1} sx={{ mt: 1 }}>
+                {selectedReport?.type === ReportType.USER && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<PersonOff />}
+                    onClick={() => {
+                      setActionType('suspend');
+                      setActionDialogOpen(true);
+                    }}
+                  >
+                    Suspend User
+                  </Button>
+                )}
+                {selectedReport?.type === ReportType.TASK && (
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<LockIcon />}
+                    onClick={() => {
+                      setActionType('lock_task');
+                      setActionDialogOpen(true);
+                    }}
+                  >
+                    Lock Task
+                  </Button>
+                )}
+                {selectedReport?.type === ReportType.REVIEW && (
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<VisibilityOff />}
+                    onClick={() => {
+                      setActionType('hide_review');
+                      setActionDialogOpen(true);
+                    }}
+                  >
+                    Hide Review
+                  </Button>
+                )}
+                {selectedReport?.type === ReportType.MESSAGE && selectedReport.message && (
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<LockIcon />}
+                    onClick={() => {
+                      setActionType('lock_contract');
+                      setActionDialogOpen(true);
+                    }}
+                  >
+                    Lock Related Contract (if applicable)
+                  </Button>
+                )}
+              </Stack>
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -413,6 +485,71 @@ const AdminReportsQueue: React.FC<AdminReportsQueueProps> = ({ onAction }) => {
             disabled={resolving}
           >
             {resolving ? 'Resolving...' : 'Resolve'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Action Dialog */}
+      <Dialog open={actionDialogOpen} onClose={() => setActionDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {actionType === 'suspend' && 'Suspend User'}
+          {actionType === 'lock_task' && 'Lock Task'}
+          {actionType === 'hide_review' && 'Hide Review'}
+          {actionType === 'lock_contract' && 'Lock Contract'}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Reason (Required)"
+              multiline
+              rows={3}
+              fullWidth
+              required
+              value={actionReason}
+              onChange={(e) => setActionReason(e.target.value)}
+              placeholder="Provide a reason for this action..."
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setActionDialogOpen(false);
+            setActionReason('');
+            setActionType(null);
+          }} disabled={performingAction}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              if (!selectedReport || !actionReason.trim()) return;
+              
+              try {
+                setPerformingAction(true);
+                
+                if (actionType === 'suspend' && selectedReport.reportedUser) {
+                  await moderationAPI.suspendUser(selectedReport.reportedUser.userId, actionReason);
+                } else if (actionType === 'lock_task' && selectedReport.task) {
+                  await moderationAPI.lockTask(selectedReport.task.taskId, actionReason, selectedReport.reportId);
+                } else if (actionType === 'hide_review' && selectedReport.review) {
+                  await moderationAPI.hideReview(selectedReport.review.reviewId, actionReason);
+                }
+                
+                setActionDialogOpen(false);
+                setActionReason('');
+                setActionType(null);
+                fetchReports();
+                if (onAction) onAction();
+              } catch (err: any) {
+                setError(err.response?.data?.error || 'Failed to perform action');
+              } finally {
+                setPerformingAction(false);
+              }
+            }}
+            disabled={performingAction || !actionReason.trim()}
+          >
+            {performingAction ? 'Processing...' : 'Confirm'}
           </Button>
         </DialogActions>
       </Dialog>
