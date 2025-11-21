@@ -46,7 +46,7 @@ export const placeBid = async (helperId: string, bidData: CreateBidRequest): Pro
     throw new Error('Cannot bid on your own task');
   }
 
-  // Check if helper already has a pending bid on this task
+  // Check if helper already has a bid on this task (any status)
   const existingBid = await prisma.bid.findUnique({
     where: {
       taskId_helperId: {
@@ -56,29 +56,64 @@ export const placeBid = async (helperId: string, bidData: CreateBidRequest): Pro
     }
   });
 
-  if (existingBid && existingBid.status === PrismaBidStatus.PENDING) {
-    throw new Error('You already have a pending bid on this task');
-  }
-
-  // Create the bid
-  const bid = await prisma.bid.create({
-    data: {
-      taskId,
-      helperId,
-      amount,
-      note,
-      status: PrismaBidStatus.PENDING
-    },
-    include: {
-      helper: {
-        select: {
-          userId: true,
-          name: true,
-          email: true
+  if (existingBid) {
+    if (existingBid.status === PrismaBidStatus.PENDING) {
+      throw new Error('You already have a pending bid on this task');
+    }
+    if (existingBid.status === PrismaBidStatus.ACCEPTED) {
+      throw new Error('You already have an accepted bid on this task');
+    }
+    // If bid is REJECTED or WITHDRAWN, allow creating a new one by deleting the old one first
+    await prisma.bid.delete({
+      where: {
+        taskId_helperId: {
+          taskId,
+          helperId
         }
       }
+    });
+  }
+
+  // Create the bid (with error handling for race conditions)
+  let bid;
+  try {
+    bid = await prisma.bid.create({
+      data: {
+        taskId,
+        helperId,
+        amount,
+        note,
+        status: PrismaBidStatus.PENDING
+      },
+      include: {
+        helper: {
+          select: {
+            userId: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+  } catch (error: any) {
+    // Handle unique constraint violation (race condition)
+    if (error.code === 'P2002' && error.meta?.target?.includes('taskId') && error.meta?.target?.includes('helperId')) {
+      // Check if there's actually a pending bid now
+      const currentBid = await prisma.bid.findUnique({
+        where: {
+          taskId_helperId: {
+            taskId,
+            helperId
+          }
+        }
+      });
+      if (currentBid && currentBid.status === PrismaBidStatus.PENDING) {
+        throw new Error('You already have a pending bid on this task');
+      }
+      throw new Error('Unable to create bid. Please try again.');
     }
-  });
+    throw error;
+  }
 
   // Create notification for the poster about new bid
   try {
