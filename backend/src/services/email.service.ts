@@ -76,6 +76,52 @@ export const sendPasswordResetEmail = async (
   }
 };
 
+/**
+ * Send a notification email
+ * Used for in-app notifications that should also be sent via email
+ */
+export const sendNotificationEmail = async (
+  email: string,
+  userName: string,
+  title: string,
+  message: string,
+  actionUrl?: string
+): Promise<void> => {
+  const notificationUrl = actionUrl || `${config.FRONTEND_URL}/notifications`;
+
+  try {
+    await resend.emails.send({
+      from: `${config.EMAIL_FROM_NAME} <${config.EMAIL_FROM}>`,
+      to: email,
+      subject: `${title} - JiffyJobs`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>${title}</h2>
+          <p>Hi ${userName},</p>
+          <p>${message}</p>
+          ${actionUrl ? `
+          <a href="${actionUrl}" 
+             style="display: inline-block; padding: 12px 24px; background-color: #0ea5e9; 
+                    color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+            View Details
+          </a>
+          <p>Or copy and paste this link into your browser:</p>
+          <p style="color: #666; font-size: 14px;">${actionUrl}</p>
+          ` : ''}
+          <p style="color: #999; font-size: 12px; margin-top: 30px;">
+            You're receiving this email because you have notifications enabled on JiffyJobs.
+          </p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error('Error sending notification email:', error);
+    if (config.NODE_ENV === 'development') {
+      console.log('Notification URL:', notificationUrl);
+    }
+  }
+};
+
 export const sendPaymentConfirmation = async (
   email: string,
   data: { contractId: string; amount: number; taskTitle: string }

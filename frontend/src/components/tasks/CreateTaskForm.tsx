@@ -94,7 +94,7 @@ const CreateTaskForm: React.FC = () => {
       } else {
         setLocationError('Could not find coordinates for this address');
       }
-    } catch (error) {
+    } catch {
       setLocationError('Failed to get location coordinates');
     }
   };
@@ -152,8 +152,9 @@ const CreateTaskForm: React.FC = () => {
       });
 
       navigate('/my-tasks');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to create task');
     } finally {
       setLoading(false);
     }

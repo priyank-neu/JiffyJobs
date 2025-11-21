@@ -40,7 +40,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { discoveryAPI } from '@/services/api.service';
-import { Task, TaskCategory } from '@/types/task.types';
+import { Task, TaskCategory, TaskWithDistance } from '@/types/task.types';
 import TaskMap from '../components/tasks/TaskMap';
 
 interface DiscoveryFilters {
@@ -105,6 +105,7 @@ const TaskDiscovery: React.FC = () => {
     if (userLocation || locationError) {
       searchTasks();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, pagination.page, userLocation, locationError]);
 
   // Debug effect to track showZipDialog state changes
@@ -136,14 +137,15 @@ const TaskDiscovery: React.FC = () => {
       
       // Save location to localStorage
       localStorage.setItem('userLocation', JSON.stringify({ latitude, longitude }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error getting location:', err);
+      const geoError = err as { code?: number; message?: string };
       
-      if (err.code === 1) {
+      if (geoError.code === 1) {
         setLocationError('Location access denied. Please enter your ZIP code to discover nearby tasks.');
-      } else if (err.code === 2) {
+      } else if (geoError.code === 2) {
         setLocationError('Location unavailable. Please enter your ZIP code to discover nearby tasks.');
-      } else if (err.code === 3) {
+      } else if (geoError.code === 3) {
         setLocationError('Location request timed out. Please enter your ZIP code to discover nearby tasks.');
       } else {
         setLocationError('Unable to get your location. Please enter your ZIP code to discover nearby tasks.');
@@ -209,8 +211,9 @@ const TaskDiscovery: React.FC = () => {
       console.log('Tasks received:', response.tasks);
       setTasks(response.tasks);
       setPagination(response.pagination);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load tasks');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to load tasks');
     } finally {
       setLoading(false);
     }
@@ -474,7 +477,7 @@ const TaskDiscovery: React.FC = () => {
                 </InputLabel>
                 <Select
                   value={filters.sortBy}
-                  onChange={(e) => handleFilterChange({ sortBy: e.target.value as any })}
+                  onChange={(e) => handleFilterChange({ sortBy: e.target.value as 'proximity' | 'soonest' | 'budget' | 'newest' | 'oldest' | 'title' })}
                   sx={{
                     '& .MuiSelect-select': {
                       paddingRight: '40px',
@@ -624,7 +627,7 @@ const TaskDiscovery: React.FC = () => {
                         size="small"
                         color="primary"
                       />
-                      {(task as any).skillMatch?.isGoodMatch && (
+                      {'skillMatch' in task && (task as TaskWithDistance).skillMatch?.isGoodMatch && (
                         <Chip
                           label="Good Match"
                           size="small"
@@ -652,9 +655,9 @@ const TaskDiscovery: React.FC = () => {
                       <Typography variant="body2">
                         {task.location ? `${task.location.city}, ${task.location.state}` : (task.addressMasked || 'Location available')}
                       </Typography>
-                      {(task as any).distance && (
+                      {'distance' in task && (task as TaskWithDistance).distance && (
                         <Typography variant="body2" color="primary">
-                          {formatDistance((task as any).distance)}
+                          {formatDistance((task as TaskWithDistance).distance ?? 0)}
                         </Typography>
                       )}
                     </Box>
@@ -696,7 +699,7 @@ const TaskDiscovery: React.FC = () => {
       ) : (
         <Box sx={{ height: '600px', width: '100%' }}>
           <TaskMap
-            tasks={tasks as any}
+            tasks={tasks as TaskWithDistance[]}
             userLocation={userLocation || undefined}
             onTaskClick={(task) => {
               navigate(`/task/${task.taskId}`);

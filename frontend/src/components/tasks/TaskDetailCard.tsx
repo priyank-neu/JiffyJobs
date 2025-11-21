@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
+import { Task, TaskWithDistance } from '@/types/task.types';
 import {
   Description,
   Category,
@@ -32,7 +33,7 @@ export const TaskDetailCard: React.FC<TaskDetailCardProps> = ({ title, icon, chi
 };
 
 interface TaskDetailsProps {
-  task: any;
+  task: Task;
   showSkillMatch?: boolean;
 }
 
@@ -128,7 +129,7 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({ task, showSkillMatch =
             </Typography>
           </Box>
         </Box>
-        {showSkillMatch && (task as any).skillMatch?.isGoodMatch && (
+        {showSkillMatch && 'skillMatch' in task && (task as TaskWithDistance).skillMatch?.isGoodMatch && (
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <CheckCircle color="success" />
@@ -157,7 +158,7 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({ task, showSkillMatch =
 };
 
 interface TaskDescriptionProps {
-  task: any;
+  task: Task;
 }
 
 export const TaskDescription: React.FC<TaskDescriptionProps> = ({ task }) => {
@@ -171,7 +172,7 @@ export const TaskDescription: React.FC<TaskDescriptionProps> = ({ task }) => {
 };
 
 interface TaskLocationProps {
-  task: any;
+  task: Task;
 }
 
 export const TaskLocation: React.FC<TaskLocationProps> = ({ task }) => {
@@ -192,7 +193,7 @@ export const TaskLocation: React.FC<TaskLocationProps> = ({ task }) => {
 };
 
 interface TaskPosterProps {
-  task: any;
+  task: Task;
 }
 
 export const TaskPoster: React.FC<TaskPosterProps> = ({ task }) => {

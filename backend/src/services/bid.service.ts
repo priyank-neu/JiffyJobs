@@ -1,6 +1,7 @@
 import prisma from '../config/database';
-import { BidStatus as PrismaBidStatus, TaskStatus } from '@prisma/client';
+import { BidStatus as PrismaBidStatus, TaskStatus, NotificationType } from '@prisma/client';
 import { BidStatus } from '../types';
+import { createNotification } from './notification.service';
 import { 
   Bid, 
   Contract, 
@@ -78,6 +79,22 @@ export const placeBid = async (helperId: string, bidData: CreateBidRequest): Pro
       }
     }
   });
+
+  // Create notification for the poster about new bid
+  try {
+    await createNotification({
+      userId: task.posterId,
+      type: NotificationType.OTHER, // Using OTHER since BID_PLACED is not in enum, but message is clear
+      title: 'New Bid Received',
+      message: `${bid.helper?.name || bid.helper?.email || 'Someone'} placed a bid of $${amount} on your task "${task.title}"`,
+      relatedTaskId: taskId,
+      relatedBidId: bid.bidId,
+      sendEmail: true,
+    });
+  } catch (error) {
+    // Notification failure shouldn't break bid creation
+    console.error('Error creating notification for new bid:', error);
+  }
 
   // Convert Decimal to number and null to undefined for response
   return {
@@ -228,6 +245,33 @@ export const acceptBid = async (posterId: string, acceptData: AcceptBidRequest):
         acceptedBid: true
       }
     });
+
+    // Create notifications for bid accepted and helper assigned
+    try {
+      // Notify helper that their bid was accepted
+      await createNotification({
+        userId: bid.helperId,
+        type: NotificationType.BID_ACCEPTED,
+        title: 'Bid Accepted!',
+        message: `Your bid of $${Number(bid.amount)} has been accepted for "${bid.task.title}"`,
+        relatedTaskId: bid.taskId,
+        relatedBidId: bidId,
+        sendEmail: true,
+      });
+
+      // Notify helper that they've been assigned
+      await createNotification({
+        userId: bid.helperId,
+        type: NotificationType.HELPER_ASSIGNED,
+        title: 'You\'ve Been Assigned',
+        message: `You have been assigned to help with "${bid.task.title}"`,
+        relatedTaskId: bid.taskId,
+        sendEmail: true,
+      });
+    } catch (error) {
+      // Notification failure shouldn't break bid acceptance
+      console.error('Error creating notifications for bid acceptance:', error);
+    }
 
     // Return contract ID - we'll fetch full contract after transaction
     return contract.contractId;

@@ -20,13 +20,18 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { taskAPI, bidAPI } from '@/services/api.service';
-import { Task, TaskStatus, Contract } from '@/types/task.types';
+import { chatAPI } from '@/services/api.service';
+import { Task, TaskStatus } from '@/types/task.types';
+import { ChatThread } from '@/types/chat.types';
 import { useAuth } from '@/contexts/AuthContext';
 import { TaskDetailCard, TaskDetails, TaskDescription, TaskLocation, TaskPoster } from '../components/tasks/TaskDetailCard';
 import BidForm from '../components/tasks/BidForm';
 import BidList from '../components/tasks/BidList';
-import PaymentStatus from '../components/payments/PaymentStatus';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import TaskCompletionDialog from './TaskCompletionDialog';
+import ChatWindow from '../components/chat/ChatWindow';
 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
@@ -43,15 +48,24 @@ const TaskDetail: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const { user } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
-  const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [completing, setCompleting] = useState(false);
+  const [chatThread, setChatThread] = useState<ChatThread | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
   const navigate = useNavigate();
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
     fetchTask();
-  }, [taskId]);
+  }, [taskId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (task && user) {
+      loadChatThread();
+    }
+  }, [task, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTask = async () => {
     if (!taskId) return;
@@ -59,19 +73,9 @@ const TaskDetail: React.FC = () => {
     try {
       const response = await taskAPI.getTaskById(taskId);
       setTask(response.task);
-      
-      // Fetch contract if task is assigned or has a contract
-      if (response.task.status !== TaskStatus.OPEN && response.task.status !== TaskStatus.CANCELLED) {
-        try {
-          const contractResponse = await bidAPI.getTaskContract(taskId);
-          setContract(contractResponse.contract);
-        } catch (err) {
-          // Contract might not exist yet, which is fine
-          setContract(null);
-        }
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to fetch task');
     } finally {
       setLoading(false);
     }
@@ -83,8 +87,9 @@ const TaskDetail: React.FC = () => {
     try {
       await taskAPI.cancelTask(taskId);
       fetchTask();
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to cancel task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to cancel task');
     }
   };
 
@@ -94,32 +99,122 @@ const TaskDetail: React.FC = () => {
     try {
       await taskAPI.deleteTask(taskId);
       navigate('/my-tasks');
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to delete task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to delete task');
     }
   };
 
-  const handleCompleteTask = async (autoRelease: boolean = false) => {
+  // Task execution handlers
+  const handleStartTask = async () => {
     if (!taskId) return;
 
-    const confirmMessage = autoRelease
-      ? 'Are you sure you want to confirm completion? This will release the payout to the helper.'
-      : 'Mark this task as done? The poster will need to confirm before payout is released.';
-
-    if (!window.confirm(confirmMessage)) return;
-
     try {
-      setCompleting(true);
-      await taskAPI.completeTask(taskId, autoRelease);
-      await fetchTask(); // Refresh to get updated status
-      alert(autoRelease ? 'Task completed and payout released!' : 'Task marked as done! Waiting for poster confirmation.');
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to complete task');
-    } finally {
-      setCompleting(false);
+      await taskAPI.startTask(taskId);
+      alert('Task started successfully!');
+      fetchTask();
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to start task');
     }
   };
 
+  const handleCompleteTask = async (notes: string) => {
+    if (!taskId) return;
+    await taskAPI.completeTask(taskId, notes);
+    fetchTask();
+  };
+
+  const handleConfirmCompletion = async (notes: string) => {
+    if (!taskId) return;
+    await taskAPI.confirmTaskCompletion(taskId, notes);
+    fetchTask();
+  };
+
+  // Chat handlers
+  const loadChatThread = async () => {
+    if (!task || !user || !taskId) return;
+
+    try {
+      setChatLoading(true);
+      // Try to find existing thread
+      const threads = await chatAPI.getThreads();
+      
+      // Ensure threads is an array
+      if (!Array.isArray(threads)) {
+        console.warn('getThreads did not return an array:', threads);
+        return;
+      }
+      
+      const existingThread = threads.find(
+        (t) => t.taskId === taskId && (t.posterId === user.userId || t.helperId === user.userId)
+      );
+
+      if (existingThread) {
+        setChatThread(existingThread);
+      }
+    } catch (err: unknown) {
+      console.error('Failed to load chat thread:', err);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!task || !user || !taskId) return;
+
+    try {
+      setChatLoading(true);
+      // Determine counterpart
+      const isOwner = user.userId === task.posterId;
+      let counterpartId: string | undefined;
+
+      if (isOwner) {
+        // For owner: use assigned helper, or get helper from first bid
+        if (task.assignedHelperId) {
+          counterpartId = task.assignedHelperId;
+        } else {
+          // Fetch bids to get helper ID
+          try {
+            const bidsResponse = await bidAPI.getTaskBids(taskId);
+            if (bidsResponse.bids && bidsResponse.bids.length > 0) {
+              // Use the first bid's helper
+              counterpartId = bidsResponse.bids[0].helperId;
+            }
+          } catch (bidError) {
+            console.error('Failed to fetch bids:', bidError);
+          }
+        }
+      } else {
+        // For helper: use poster ID
+        counterpartId = task.posterId;
+      }
+
+      if (!counterpartId) {
+        alert('Cannot start chat: No counterpart found. Make sure there is a bid on this task or a helper is assigned.');
+        return;
+      }
+
+      const response = await chatAPI.getOrCreateThread({
+        taskId,
+        helperId: counterpartId,
+      });
+      setChatThread(response.thread);
+      setShowChat(true);
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to start chat');
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const getCounterpartName = (): string => {
+    if (!chatThread || !user) return '';
+    const isOwner = user.userId === chatThread.posterId;
+    const counterpart = isOwner ? chatThread.helper : chatThread.poster;
+    return counterpart?.name || counterpart?.email || 'User';
+  };
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -144,10 +239,6 @@ const TaskDetail: React.FC = () => {
   }
 
   const isOwner = user?.userId === task?.posterId;
-  const isHelper = user?.userId === task?.assignedHelperId;
-  const canComplete = (isHelper && task.status === TaskStatus.ASSIGNED) || 
-                      (isHelper && task.status === TaskStatus.IN_PROGRESS) ||
-                      (isOwner && task.status === TaskStatus.AWAITING_CONFIRMATION);
 
 
   return (
@@ -241,71 +332,127 @@ const TaskDetail: React.FC = () => {
               <TaskPoster task={task} />
 
 
-              {/* Task Status Info */}
+               {/* Task Status Info */}
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Task Status
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <Chip label={task.status} color={statusColors[task.status]} />
                   </Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     {task.status === 'OPEN' && 'This task is available for helpers to apply.'}
-                    {task.status === 'IN_PROGRESS' && 'This task is currently being worked on.'}
-                    {task.status === 'AWAITING_CONFIRMATION' && 'Task is done, waiting for poster confirmation.'}
+                    {task.status === 'ASSIGNED' && !isOwner && 'You are assigned! Start working when ready.'}
+                    {task.status === 'ASSIGNED' && isOwner && 'A helper has been assigned. Waiting for them to start.'}
+                    {task.status === 'IN_PROGRESS' && !isOwner && 'Currently working on this task.'}
+                    {task.status === 'IN_PROGRESS' && isOwner && 'Helper is working on your task.'}
+                    {task.status === 'AWAITING_CONFIRMATION' && !isOwner && 'Waiting for poster to confirm completion.'}
+                    {task.status === 'AWAITING_CONFIRMATION' && isOwner && 'Please confirm task completion.'}
                     {task.status === 'COMPLETED' && 'This task has been completed.'}
                     {task.status === 'CANCELLED' && 'This task has been cancelled.'}
                   </Typography>
-                </CardContent>
-              </Card>
 
-              {/* Payment Status - Show when contract exists */}
-              {contract && (
-                <PaymentStatus 
-                  contract={contract} 
-                  onRefresh={fetchTask}
-                />
-              )}
-
-              {/* Task Completion Buttons */}
-              {canComplete && (
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Task Completion
-                    </Typography>
-                    {isHelper && (task.status === TaskStatus.ASSIGNED || task.status === TaskStatus.IN_PROGRESS) && (
-                      <Button
-                        variant="contained"
-                        color="success"
-                        fullWidth
-                        startIcon={<CheckCircleIcon />}
-                        onClick={() => handleCompleteTask(false)}
-                        disabled={completing}
-                        sx={{ mt: 1 }}
-                      >
-                        {completing ? 'Processing...' : 'Mark as Done'}
-                      </Button>
-                    )}
-                    {isOwner && task.status === TaskStatus.AWAITING_CONFIRMATION && (
-                      <Box>
+                  {!isOwner && task.assignedHelperId === user?.userId && (
+                    <Stack spacing={2}>
+                      {task.status === 'ASSIGNED' && (
                         <Button
                           variant="contained"
                           color="success"
                           fullWidth
-                          startIcon={<CheckCircleIcon />}
-                          onClick={() => handleCompleteTask(true)}
-                          disabled={completing}
-                          sx={{ mt: 1 }}
+                          startIcon={<PlayArrowIcon />}
+                          onClick={handleStartTask}
                         >
-                          {completing ? 'Processing...' : 'Confirm Completion & Release Payout'}
+                          Start Task
                         </Button>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                          This will release the payout to the helper immediately.
-                        </Typography>
-                      </Box>
+                      )}
+                      
+                      {task.status === 'IN_PROGRESS' && (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          fullWidth
+                          startIcon={<CheckCircleIcon />}
+                          onClick={() => setShowCompleteDialog(true)}
+                        >
+                          Mark as Complete
+                        </Button>
+                      )}
+                    </Stack>
+                  )}
+
+                  {isOwner && (
+                    <Stack spacing={2}>
+                      {task.status === 'AWAITING_CONFIRMATION' && (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          fullWidth
+                          startIcon={<VerifiedIcon />}
+                          onClick={() => setShowConfirmDialog(true)}
+                        >
+                          Confirm Completion
+                        </Button>
+                      )}
+                    </Stack>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Chat Section */}
+              {user && task && chatThread && (
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6">Chat</Typography>
+                      {chatThread.unreadCount && chatThread.unreadCount > 0 && (
+                        <Chip
+                          label={`${chatThread.unreadCount} unread`}
+                          color="primary"
+                          size="small"
+                        />
+                      )}
+                    </Box>
+                    {showChat ? (
+                      <ChatWindow
+                        threadId={chatThread.threadId}
+                        taskTitle={task.title}
+                        counterpartName={getCounterpartName()}
+                        onClose={() => setShowChat(false)}
+                      />
+                    ) : (
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => setShowChat(true)}
+                      >
+                        Open Chat
+                      </Button>
                     )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Start Chat Button - Show if thread doesn't exist but user can chat */}
+              {user && task && !chatThread && !chatLoading && (
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Chat
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {isOwner
+                        ? 'Start chatting with helpers who placed bids'
+                        : 'Start chatting with the task poster'}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={handleStartChat}
+                      disabled={chatLoading}
+                    >
+                      Start Chat
+                    </Button>
                   </CardContent>
                 </Card>
               )}
@@ -371,6 +518,24 @@ const TaskDetail: React.FC = () => {
           )}
         </Box>
       </Paper>
+
+      <TaskCompletionDialog
+        open={showCompleteDialog}
+        onClose={() => setShowCompleteDialog(false)}
+        onConfirm={handleCompleteTask}
+        title="Mark Task as Complete"
+        description="You're about to mark this task as complete. The poster will be notified to review and confirm your work."
+        type="complete"
+      />
+
+      <TaskCompletionDialog
+        open={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handleConfirmCompletion}
+        title="Confirm Task Completion"
+        description="Confirm that the task has been completed satisfactorily. Payment will be released to the helper."
+        type="confirm"
+      />
     </Container>
   );
 };

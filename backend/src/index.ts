@@ -1,4 +1,5 @@
 import express, { Application } from 'express';
+import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -6,6 +7,8 @@ import config from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
 import { startAutoReleaseScheduler } from './services/autoRelease.service';
+import { initializeSocketIO } from './config/socket';
+import { initializeSocketService } from './services/socket.service';
 
 const app: Application = express();
 
@@ -27,13 +30,23 @@ app.use('/api', routes);
 // Error handling
 app.use(errorHandler);
 
+// Create HTTP server
+const httpServer = http.createServer(app);
+
+// Initialize Socket.IO
+const io = initializeSocketIO(httpServer);
+
+// Initialize Socket service
+initializeSocketService(io);
+
 // Start server
 const PORT = config.PORT || 5001;
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📝 Environment: ${config.NODE_ENV}`);
   console.log(`🌐 API URL: ${config.API_URL}`);
+  console.log(`🔌 Socket.IO enabled`);
   
   // Start auto-release scheduler
   startAutoReleaseScheduler();

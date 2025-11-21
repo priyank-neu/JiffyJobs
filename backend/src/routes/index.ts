@@ -5,6 +5,9 @@ import uploadRoutes from './upload.routes';
 import discoveryRoutes from './discovery.routes';
 import bidRoutes from './bid.routes';
 import paymentRoutes from './payment.routes';
+import taskExecutionRoutes from './taskExecution.routes';
+import chatRoutes from './chat.routes';
+import notificationRoutes from './notification.routes';
  
 const router = Router();
  
@@ -15,6 +18,9 @@ router.use('/uploads', uploadRoutes);
 router.use('/discover', discoveryRoutes);
 router.use('/bids', bidRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/tasks', taskExecutionRoutes);
+router.use('/chat', chatRoutes);
+router.use('/notifications', notificationRoutes);
  
 // Health check
 router.get('/health', (req, res) => {

@@ -1,7 +1,8 @@
 import prisma from '../config/database';
-import { TaskStatus } from '@prisma/client';
+import { TaskStatus, NotificationType } from '@prisma/client';
 import { CreateTaskDTO, UpdateTaskDTO, TaskFilter } from '../types/task.types';
 import { createLocation, maskAddress } from './location.service';
+import { createNotification } from './notification.service';
  
 export const createTask = async (posterId: string, taskData: CreateTaskDTO) => {
   // Validation
@@ -197,9 +198,32 @@ export const updateTask = async (
       },
       location: true,
       photos: true,
+      assignedHelper: {
+        select: {
+          userId: true,
+          name: true,
+          email: true,
+        },
+      },
     },
   });
- 
+
+  // Notify assigned helper if task was updated
+  if (updatedTask.assignedHelperId && updatedTask.assignedHelper) {
+    try {
+      await createNotification({
+        userId: updatedTask.assignedHelperId,
+        type: NotificationType.TASK_UPDATED,
+        title: 'Task Updated',
+        message: `The task "${updatedTask.title}" has been updated`,
+        relatedTaskId: taskId,
+        sendEmail: true,
+      });
+    } catch (error) {
+      console.error('Error creating notification for task update:', error);
+    }
+  }
+
   return updatedTask;
 };
  
