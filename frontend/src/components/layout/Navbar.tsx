@@ -6,6 +6,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import SettingsIcon from '@mui/icons-material/Settings';
 import NotificationBadge from '@/components/notifications/NotificationBadge';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import NotificationToast from '@/components/notifications/NotificationToast';
@@ -52,6 +53,9 @@ const Navbar: React.FC = () => {
     </Button>
     <Button color="inherit" onClick={() => navigate('/my-bids')}>
       My Bids
+    </Button>
+    <Button color="inherit" startIcon={<SettingsIcon />} onClick={() => navigate('/settings')}>
+      Settings
     </Button>
     <NotificationBadge count={unreadCount}>
       <IconButton
