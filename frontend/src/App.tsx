@@ -16,6 +16,7 @@ import EditTask from './pages/EditTask';
 import TaskDetail from './pages/TaskDetail';
 import TaskDiscovery from './pages/TaskDiscovery';
 import MyBids from './pages/MyBids';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -82,6 +83,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MyBids />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
                   </ProtectedRoute>
                 }
               />

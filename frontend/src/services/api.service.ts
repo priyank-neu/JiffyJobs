@@ -31,6 +31,30 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Handle 401 errors - clear token and redirect to login
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Don't redirect on auth endpoints (login, signup, etc.)
+      const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
+                            error.config?.url?.includes('/auth/signup');
+      
+      if (!isAuthEndpoint) {
+        // Clear stored auth data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Redirect to login page
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth API
 export const authAPI = {
   signup: async (data: SignupData): Promise<AuthResponse> => {
@@ -98,6 +122,13 @@ export const taskAPI = {
 
   deleteTask: async (taskId: string): Promise<{ message: string }> => {
     const response = await api.delete(`/tasks/${taskId}`);
+    return response.data;
+  },
+
+  completeTask: async (taskId: string, autoRelease?: boolean): Promise<{ message: string; task: Task }> => {
+    const response = await api.patch(`/tasks/${taskId}/complete`, null, {
+      params: autoRelease ? { autoRelease: 'true' } : {},
+    });
     return response.data;
   },
 };
@@ -208,6 +239,45 @@ export const bidAPI = {
   // Deactivate contract
   deactivateContract: async (contractId: string): Promise<{ message: string }> => {
     const response = await api.delete(`/bids/contracts/${contractId}`);
+    return response.data;
+  },
+};
+
+// Payment API
+export const paymentAPI = {
+  // Get Stripe publishable key
+  getPublishableKey: async (): Promise<{ publishableKey: string }> => {
+    const response = await api.get('/payments/publishable-key');
+    return response.data;
+  },
+
+  // Create Stripe Connect account
+  createConnectAccount: async (): Promise<{ message: string; accountId: string; onboardingUrl: string }> => {
+    const response = await api.post('/payments/connect/create');
+    return response.data;
+  },
+
+  // Get Connect account status
+  getConnectAccountStatus: async (): Promise<{ message: string; status: { detailsSubmitted: boolean; chargesEnabled: boolean; payoutsEnabled: boolean } }> => {
+    const response = await api.get('/payments/connect/status');
+    return response.data;
+  },
+
+  // Confirm payment intent
+  confirmPayment: async (paymentIntentId: string): Promise<{ message: string }> => {
+    const response = await api.post('/payments/confirm', { paymentIntentId });
+    return response.data;
+  },
+
+  // Release payout
+  releasePayout: async (contractId: string): Promise<{ message: string }> => {
+    const response = await api.post(`/payments/payout/${contractId}`);
+    return response.data;
+  },
+
+  // Get payment history
+  getPaymentHistory: async (contractId: string): Promise<{ message: string; payments: any[] }> => {
+    const response = await api.get(`/payments/history/${contractId}`);
     return response.data;
   },
 };

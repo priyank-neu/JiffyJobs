@@ -22,7 +22,8 @@ import {
   AccessTime,
 } from '@mui/icons-material';
 import { bidAPI } from '@/services/api.service';
-import { Bid, BidStatus, BidSortOptions } from '@/types/task.types';
+import { Bid, BidStatus, BidSortOptions, Contract } from '@/types/task.types';
+import PaymentConfirmation from '../payments/PaymentConfirmation';
 
 interface BidListProps {
   taskId: string;
@@ -43,6 +44,12 @@ const BidList: React.FC<BidListProps> = ({
     field: 'amount',
     order: 'asc'
   });
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState<{
+    clientSecret: string;
+    amount: number;
+    taskTitle: string;
+  } | null>(null);
 
   const sortOptions = [
     { value: { field: 'amount' as const, order: 'asc' as const }, label: 'Amount (Low to High)' },
@@ -78,16 +85,43 @@ const BidList: React.FC<BidListProps> = ({
 
   const handleAcceptBid = async (bid: Bid) => {
     try {
-      await bidAPI.acceptBid(bid.bidId);
-      if (onBidAccepted) {
-        onBidAccepted(bid);
+      const response = await bidAPI.acceptBid(bid.bidId);
+      const contract = response.contract as Contract & { paymentInfo?: { paymentIntentId: string; clientSecret: string } };
+      
+      // If payment is required, show payment dialog
+      if (contract.paymentInfo?.clientSecret) {
+        setPaymentInfo({
+          clientSecret: contract.paymentInfo.clientSecret,
+          amount: contract.agreedAmount,
+          taskTitle: `Task Contract`,
+        });
+        setPaymentDialogOpen(true);
+      } else {
+        // No payment required, just refresh
+        if (onBidAccepted) {
+          onBidAccepted(bid);
+        }
+        fetchBids();
       }
-      // Refresh the bids list
-      fetchBids();
     } catch (err: any) {
       console.error('Error accepting bid:', err);
-      setError(err.response?.data?.message || 'Failed to accept bid');
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to accept bid');
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentDialogOpen(false);
+    setPaymentInfo(null);
+    if (onBidAccepted) {
+      // Refresh will happen automatically
+    }
+    fetchBids();
+  };
+
+  const handlePaymentClose = () => {
+    setPaymentDialogOpen(false);
+    // Still refresh to show updated status
+    fetchBids();
   };
 
   const getStatusColor = (status: BidStatus) => {
@@ -297,6 +331,18 @@ const BidList: React.FC<BidListProps> = ({
           </Card>
         ))}
       </Stack>
+
+      {/* Payment Confirmation Dialog */}
+      {paymentInfo && (
+        <PaymentConfirmation
+          open={paymentDialogOpen}
+          onClose={handlePaymentClose}
+          onSuccess={handlePaymentSuccess}
+          clientSecret={paymentInfo.clientSecret}
+          amount={paymentInfo.amount}
+          taskTitle={paymentInfo.taskTitle}
+        />
+      )}
     </Box>
   );
 };

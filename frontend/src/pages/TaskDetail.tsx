@@ -19,12 +19,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { taskAPI } from '@/services/api.service';
-import { Task, TaskStatus } from '@/types/task.types';
+import { taskAPI, bidAPI } from '@/services/api.service';
+import { Task, TaskStatus, Contract } from '@/types/task.types';
 import { useAuth } from '@/contexts/AuthContext';
 import { TaskDetailCard, TaskDetails, TaskDescription, TaskLocation, TaskPoster } from '../components/tasks/TaskDetailCard';
 import BidForm from '../components/tasks/BidForm';
 import BidList from '../components/tasks/BidList';
+import PaymentStatus from '../components/payments/PaymentStatus';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
@@ -41,8 +43,10 @@ const TaskDetail: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const { user } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
+  const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [completing, setCompleting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,6 +59,17 @@ const TaskDetail: React.FC = () => {
     try {
       const response = await taskAPI.getTaskById(taskId);
       setTask(response.task);
+      
+      // Fetch contract if task is assigned or has a contract
+      if (response.task.status !== TaskStatus.OPEN && response.task.status !== TaskStatus.CANCELLED) {
+        try {
+          const contractResponse = await bidAPI.getTaskContract(taskId);
+          setContract(contractResponse.contract);
+        } catch (err) {
+          // Contract might not exist yet, which is fine
+          setContract(null);
+        }
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to fetch task');
     } finally {
@@ -84,6 +99,27 @@ const TaskDetail: React.FC = () => {
     }
   };
 
+  const handleCompleteTask = async (autoRelease: boolean = false) => {
+    if (!taskId) return;
+
+    const confirmMessage = autoRelease
+      ? 'Are you sure you want to confirm completion? This will release the payout to the helper.'
+      : 'Mark this task as done? The poster will need to confirm before payout is released.';
+
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      setCompleting(true);
+      await taskAPI.completeTask(taskId, autoRelease);
+      await fetchTask(); // Refresh to get updated status
+      alert(autoRelease ? 'Task completed and payout released!' : 'Task marked as done! Waiting for poster confirmation.');
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to complete task');
+    } finally {
+      setCompleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -108,6 +144,10 @@ const TaskDetail: React.FC = () => {
   }
 
   const isOwner = user?.userId === task?.posterId;
+  const isHelper = user?.userId === task?.assignedHelperId;
+  const canComplete = (isHelper && task.status === TaskStatus.ASSIGNED) || 
+                      (isHelper && task.status === TaskStatus.IN_PROGRESS) ||
+                      (isOwner && task.status === TaskStatus.AWAITING_CONFIRMATION);
 
 
   return (
@@ -213,11 +253,62 @@ const TaskDetail: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     {task.status === 'OPEN' && 'This task is available for helpers to apply.'}
                     {task.status === 'IN_PROGRESS' && 'This task is currently being worked on.'}
+                    {task.status === 'AWAITING_CONFIRMATION' && 'Task is done, waiting for poster confirmation.'}
                     {task.status === 'COMPLETED' && 'This task has been completed.'}
                     {task.status === 'CANCELLED' && 'This task has been cancelled.'}
                   </Typography>
                 </CardContent>
               </Card>
+
+              {/* Payment Status - Show when contract exists */}
+              {contract && (
+                <PaymentStatus 
+                  contract={contract} 
+                  onRefresh={fetchTask}
+                />
+              )}
+
+              {/* Task Completion Buttons */}
+              {canComplete && (
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Task Completion
+                    </Typography>
+                    {isHelper && (task.status === TaskStatus.ASSIGNED || task.status === TaskStatus.IN_PROGRESS) && (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        fullWidth
+                        startIcon={<CheckCircleIcon />}
+                        onClick={() => handleCompleteTask(false)}
+                        disabled={completing}
+                        sx={{ mt: 1 }}
+                      >
+                        {completing ? 'Processing...' : 'Mark as Done'}
+                      </Button>
+                    )}
+                    {isOwner && task.status === TaskStatus.AWAITING_CONFIRMATION && (
+                      <Box>
+                        <Button
+                          variant="contained"
+                          color="success"
+                          fullWidth
+                          startIcon={<CheckCircleIcon />}
+                          onClick={() => handleCompleteTask(true)}
+                          disabled={completing}
+                          sx={{ mt: 1 }}
+                        >
+                          {completing ? 'Processing...' : 'Confirm Completion & Release Payout'}
+                        </Button>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                          This will release the payout to the helper immediately.
+                        </Typography>
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Bidding Section - Only show when user and task are loaded */}
               {user && task && task.status === TaskStatus.OPEN && (

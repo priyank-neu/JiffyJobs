@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import config from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
+import { startAutoReleaseScheduler } from './services/autoRelease.service';
 
 const app: Application = express();
 
@@ -33,4 +34,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📝 Environment: ${config.NODE_ENV}`);
   console.log(`🌐 API URL: ${config.API_URL}`);
+  
+  // Start auto-release scheduler
+  startAutoReleaseScheduler();
 });

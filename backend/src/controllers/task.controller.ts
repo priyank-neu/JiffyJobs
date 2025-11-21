@@ -125,17 +125,42 @@ export const deleteTask = async (req: AuthRequest, res: Response): Promise<void>
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
- 
+
     const { taskId } = req.params;
- 
+
     await taskService.deleteTask(taskId, req.user.userId);
- 
+
     res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error) {
     if (error instanceof Error) {
       res.status(400).json({ error: error.message });
     } else {
       res.status(500).json({ error: 'Failed to delete task' });
+    }
+  }
+};
+
+export const completeTask = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { taskId } = req.params;
+    const { autoRelease } = req.query;
+
+    const task = await taskService.completeTask(taskId, req.user.userId, autoRelease === 'true');
+
+    res.status(200).json({
+      message: 'Task completed successfully',
+      task,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Failed to complete task' });
     }
   }
 };

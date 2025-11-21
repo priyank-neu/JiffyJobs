@@ -41,6 +41,9 @@ const Navbar: React.FC = () => {
     <Button color="inherit" onClick={() => navigate('/my-bids')}>
       My Bids
     </Button>
+    <Button color="inherit" onClick={() => navigate('/settings')}>
+      Settings
+    </Button>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <PersonIcon fontSize="small" />
       <Typography variant="body2">
