@@ -59,9 +59,10 @@ const BidList: React.FC<BidListProps> = ({
       setError(null);
       const response = await bidAPI.getTaskBids(taskId, undefined, sortBy);
       setBids(response.bids);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching bids:', err);
-      setError(err.response?.data?.message || 'Failed to load bids');
+      const apiError = err as { response?: { data?: { message?: string } } };
+      setError(apiError.response?.data?.message || 'Failed to load bids');
     } finally {
       setLoading(false);
     }
@@ -69,6 +70,7 @@ const BidList: React.FC<BidListProps> = ({
 
   useEffect(() => {
     fetchBids();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, sortBy, refreshTrigger]);
 
   const handleSortChange = (newSort: BidSortOptions) => {
@@ -84,9 +86,10 @@ const BidList: React.FC<BidListProps> = ({
       }
       // Refresh the bids list
       fetchBids();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error accepting bid:', err);
-      setError(err.response?.data?.message || 'Failed to accept bid');
+      const apiError = err as { response?: { data?: { message?: string } } };
+      setError(apiError.response?.data?.message || 'Failed to accept bid');
     }
   };
 
@@ -245,7 +248,7 @@ const BidList: React.FC<BidListProps> = ({
                   <Chip
                     icon={getStatusIcon(bid.status)}
                     label={bid.status}
-                    color={getStatusColor(bid.status) as any}
+                    color={getStatusColor(bid.status) as 'default' | 'primary' | 'success' | 'warning' | 'error'}
                     size="small"
                     sx={{ mt: 1 }}
                   />

@@ -50,8 +50,9 @@ const SignupForm: React.FC = () => {
         phoneNumber: formData.phoneNumber || undefined,
       });
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Signup failed. Please try again.');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }

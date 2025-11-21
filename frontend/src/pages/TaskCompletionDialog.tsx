@@ -45,8 +45,9 @@ const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
       await onConfirm(notes);
       setNotes('');
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Something went wrong');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Something went wrong');
     } finally {
       setLoading(false);
     }

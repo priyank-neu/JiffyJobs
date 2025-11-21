@@ -12,11 +12,11 @@ import { AttachMoney, Description, Send } from '@mui/icons-material';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { bidAPI } from '@/services/api.service';
-import { CreateBidData, Task } from '@/types/task.types';
+import { CreateBidData, Task, Bid } from '@/types/task.types';
 
 interface BidFormProps {
   task: Task;
-  onBidPlaced?: (bid: any) => void;
+  onBidPlaced?: (bid: Bid) => void;
   onCancel?: () => void;
 }
 
@@ -83,11 +83,12 @@ const BidForm: React.FC<BidFormProps> = ({ task, onBidPlaced, onCancel }) => {
         amount: 0,
         note: '',
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error placing bid:', err);
+      const apiError = err as { response?: { data?: { error?: string; message?: string } } };
       setError(
-        err.response?.data?.error || 
-        err.response?.data?.message || 
+        apiError.response?.data?.error || 
+        apiError.response?.data?.message || 
         'Failed to place bid. Please try again.'
       );
     } finally {

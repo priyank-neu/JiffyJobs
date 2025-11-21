@@ -59,13 +59,13 @@ const TaskDetail: React.FC = () => {
 
   useEffect(() => {
     fetchTask();
-  }, [taskId]);
+  }, [taskId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (task && user) {
       loadChatThread();
     }
-  }, [task, user]);
+  }, [task, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTask = async () => {
     if (!taskId) return;
@@ -73,8 +73,9 @@ const TaskDetail: React.FC = () => {
     try {
       const response = await taskAPI.getTaskById(taskId);
       setTask(response.task);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to fetch task');
     } finally {
       setLoading(false);
     }
@@ -86,8 +87,9 @@ const TaskDetail: React.FC = () => {
     try {
       await taskAPI.cancelTask(taskId);
       fetchTask();
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to cancel task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to cancel task');
     }
   };
 
@@ -97,8 +99,9 @@ const TaskDetail: React.FC = () => {
     try {
       await taskAPI.deleteTask(taskId);
       navigate('/my-tasks');
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to delete task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to delete task');
     }
   };
 
@@ -110,31 +113,22 @@ const TaskDetail: React.FC = () => {
       await taskAPI.startTask(taskId);
       alert('Task started successfully!');
       fetchTask();
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to start task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to start task');
     }
   };
 
   const handleCompleteTask = async (notes: string) => {
     if (!taskId) return;
-
-    try {
-      await taskAPI.completeTask(taskId, notes);
-      fetchTask();
-    } catch (err: any) {
-      throw err;
-    }
+    await taskAPI.completeTask(taskId, notes);
+    fetchTask();
   };
 
   const handleConfirmCompletion = async (notes: string) => {
     if (!taskId) return;
-
-    try {
-      await taskAPI.confirmTaskCompletion(taskId, notes);
-      fetchTask();
-    } catch (err: any) {
-      throw err;
-    }
+    await taskAPI.confirmTaskCompletion(taskId, notes);
+    fetchTask();
   };
 
   // Chat handlers
@@ -159,7 +153,7 @@ const TaskDetail: React.FC = () => {
       if (existingThread) {
         setChatThread(existingThread);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load chat thread:', err);
     } finally {
       setChatLoading(false);
@@ -207,8 +201,9 @@ const TaskDetail: React.FC = () => {
       });
       setChatThread(response.thread);
       setShowChat(true);
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to start chat');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to start chat');
     } finally {
       setChatLoading(false);
     }

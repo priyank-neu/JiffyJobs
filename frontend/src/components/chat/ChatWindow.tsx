@@ -41,8 +41,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       setError(null);
       const response = await chatAPI.getThreadMessages(threadId, pageNum, 50);
       setMessages(response.messages);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load messages');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to load messages');
     } finally {
       setIsLoading(false);
     }
@@ -126,8 +127,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         body: messageBody,
       });
       setMessages((prev) => [...prev, newMessage]);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to send message');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to send message');
     } finally {
       setIsSending(false);
     }

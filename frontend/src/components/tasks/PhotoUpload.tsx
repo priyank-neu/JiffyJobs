@@ -55,7 +55,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ photos, onPhotosChange, maxPh
 
       const uploadedUrls = await Promise.all(uploadPromises);
       onPhotosChange([...photos, ...uploadedUrls]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Upload error:', err);
       setError(err.response?.data?.error || 'Failed to upload photos');
     } finally {

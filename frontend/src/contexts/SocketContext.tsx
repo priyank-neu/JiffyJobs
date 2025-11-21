@@ -21,6 +21,7 @@ interface SocketContextType {
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSocket = () => {
   const context = useContext(SocketContext);
   if (!context) {
@@ -87,7 +88,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       setIsConnected(false);
     });
 
-    newSocket.on('connect_error', (error: any) => {
+    newSocket.on('connect_error', (error: { message?: string }) => {
       console.error('Socket.IO connection error:', error);
       setIsConnected(false);
       

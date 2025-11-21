@@ -163,7 +163,7 @@ export const discoveryAPI = {
     sortOrder?: 'asc' | 'desc';
   }): Promise<{
     message: string;
-    tasks: any[];
+    tasks: Task[];
     pagination: {
       page: number;
       limit: number;
@@ -207,7 +207,7 @@ export const bidAPI = {
 
   // Get helper's bids
   getMyBids: async (filters?: BidFilter, sort?: BidSortOptions): Promise<{ message: string; bids: Bid[] }> => {
-    const params: any = {};
+    const params: Record<string, unknown> = {};
     if (filters?.status) params.status = filters.status;
     if (filters?.taskId) params.taskId = filters.taskId;
     if (sort?.field) params.sortBy = sort.field;
@@ -219,7 +219,7 @@ export const bidAPI = {
 
   // Get bids for a specific task
   getTaskBids: async (taskId: string, filters?: BidFilter, sort?: BidSortOptions): Promise<{ message: string; bids: Bid[] }> => {
-    const params: any = {};
+    const params: Record<string, unknown> = {};
     if (filters?.status) params.status = filters.status;
     if (sort?.field) params.sortBy = sort.field;
     if (sort?.order) params.sortOrder = sort.order;

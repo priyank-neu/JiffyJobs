@@ -84,10 +84,11 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading = false }
         severity: 'success',
       });
       handleReportCancel();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { error?: string } } };
       setSnackbar({
         open: true,
-        message: error.response?.data?.error || 'Failed to report message. Please try again.',
+        message: apiError.response?.data?.error || 'Failed to report message. Please try again.',
         severity: 'error',
       });
     } finally {

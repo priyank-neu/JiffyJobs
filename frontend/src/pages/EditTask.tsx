@@ -56,6 +56,7 @@ const EditTask: React.FC = () => {
 
   useEffect(() => {
     fetchTask();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const fetchTask = async () => {
@@ -96,8 +97,9 @@ const EditTask: React.FC = () => {
           longitude: 0,
         });
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to fetch task');
     } finally {
       setLoading(false);
     }
@@ -140,7 +142,7 @@ const EditTask: React.FC = () => {
       } else {
         setLocationError('Could not find coordinates for this address');
       }
-    } catch (error) {
+    } catch {
       setLocationError('Failed to get location coordinates');
     }
   };
@@ -175,7 +177,7 @@ const EditTask: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const updateData: any = {
+      const updateData: UpdateTaskData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
@@ -198,8 +200,9 @@ const EditTask: React.FC = () => {
       await taskAPI.updateTask(taskId, updateData);
 
       navigate('/my-tasks');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to update task');
     } finally {
       setSubmitting(false);
     }
