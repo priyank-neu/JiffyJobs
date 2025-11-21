@@ -30,12 +30,9 @@ import {
 } from '@mui/material';
 import {
   Visibility,
-  CheckCircle,
-  Close,
-  FilterList,
   Refresh,
 } from '@mui/icons-material';
-import { reportAPI, moderationAPI } from '@/services/api.service';
+import { reportAPI } from '@/services/api.service';
 import { Report, ReportType, ReportStatus } from '@/types/report.types';
 
 interface AdminReportsQueueProps {
