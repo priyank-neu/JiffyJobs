@@ -241,6 +241,8 @@ export const verifyNeighborhoodByOTP = async (req: AuthRequest, res: Response): 
  */
 export const getAllSkills = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    // This endpoint doesn't need user data, just authentication check
+    // req.user is available from middleware but we don't need it here
     const skills = await prisma.skill.findMany({
       orderBy: { name: 'asc' },
       select: {
