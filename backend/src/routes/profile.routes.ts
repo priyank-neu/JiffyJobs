@@ -13,9 +13,6 @@ router.get('/me', profileController.getMyProfile);
 // Update own profile
 router.patch('/me', profileController.updateProfile);
 
-// Get public profile
-router.get('/:userId', profileController.getPublicProfile);
-
 // Set neighborhood
 router.post('/neighborhood', profileController.setNeighborhood);
 
@@ -24,10 +21,13 @@ router.post('/neighborhood/verify/geo', profileController.verifyNeighborhoodByGe
 router.post('/neighborhood/verify/otp/generate', profileController.generateNeighborhoodOTP);
 router.post('/neighborhood/verify/otp', profileController.verifyNeighborhoodByOTP);
 
-// Manage skills
+// Manage skills (must come before /:userId to avoid route conflict)
 router.get('/skills', profileController.getAllSkills);
 router.post('/skills', profileController.addSkill);
 router.delete('/skills/:skillId', profileController.removeSkill);
+
+// Get public profile (must be last to avoid matching /skills, /me, etc.)
+router.get('/:userId', profileController.getPublicProfile);
 
 export default router;
 
