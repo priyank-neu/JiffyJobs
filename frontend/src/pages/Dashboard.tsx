@@ -1,14 +1,38 @@
-import React from 'react';
-import { Container, Typography, Box, Paper, Alert } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Container, Typography, Box, Paper, Alert, Rating, Chip } from '@mui/material';
 import { useAuth } from '@/contexts/AuthContext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@mui/material';
+import { reviewAPI } from '@/services/api.service';
+import { ReviewStats, REVIEW_TAG_LABELS } from '@/types/review.types';
+import ReviewList from '@/components/reviews/ReviewList';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    if (user?.userId) {
+      loadReviewStats();
+    }
+  }, [user?.userId]);
+
+  const loadReviewStats = async () => {
+    if (!user?.userId) return;
+    setLoadingStats(true);
+    try {
+      const stats = await reviewAPI.getUserReviewStats(user.userId);
+      setReviewStats(stats);
+    } catch (error) {
+      console.error('Failed to load review stats:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -64,35 +88,84 @@ const Dashboard: React.FC = () => {
         </Box>
       </Paper>
 
-      <Paper sx={{ p: 4 }}>
-  <Typography variant="h6" gutterBottom>
-    Getting Started
-  </Typography>
-  <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-    🎉 Your account has been created successfully!
-  </Typography>
-  <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-    Epic 1: User Authentication - Complete ✅
-  </Typography>
-  <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-    Epic 2: Task Posting - In Progress 🚧
-  </Typography>
+      {/* Review Stats */}
+      {user?.userId && (
+        <Paper sx={{ p: 4, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Your Reviews
+          </Typography>
+          {loadingStats ? (
+            <Typography variant="body2" color="text.secondary">Loading...</Typography>
+          ) : reviewStats && reviewStats.totalCount > 0 ? (
+            <Box sx={{ mt: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Rating value={reviewStats.averageRating} readOnly precision={0.1} />
+                <Typography variant="h6">
+                  {reviewStats.averageRating.toFixed(1)} / 5.0
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  ({reviewStats.totalCount} {reviewStats.totalCount === 1 ? 'review' : 'reviews'})
+                </Typography>
+              </Box>
+              {reviewStats.commonTags.length > 0 && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                    Common tags:
+                  </Typography>
+                  {reviewStats.commonTags.map((tag) => (
+                    <Chip
+                      key={tag}
+                      label={REVIEW_TAG_LABELS[tag]}
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              )}
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Recent Reviews
+                </Typography>
+                <ReviewList userId={user.userId} showActions={false} />
+              </Box>
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              No reviews yet. Complete tasks to receive reviews!
+            </Typography>
+          )}
+        </Paper>
+      )}
 
-  <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-    <Button
-      variant="contained"
-      onClick={() => navigate('/tasks/create')}
-    >
-      Post a Task
-    </Button>
-    <Button
-      variant="outlined"
-      onClick={() => navigate('/my-tasks')}
-    >
-      View My Tasks
-    </Button>
-  </Box>
-</Paper>
+      <Paper sx={{ p: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Getting Started
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+          🎉 Your account has been created successfully!
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+          Epic 1: User Authentication - Complete ✅
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+          Epic 2: Task Posting - In Progress 🚧
+        </Typography>
+
+        <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/tasks/create')}
+          >
+            Post a Task
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/my-tasks')}
+          >
+            View My Tasks
+          </Button>
+        </Box>
+      </Paper>
     </Container>
   );
 };
