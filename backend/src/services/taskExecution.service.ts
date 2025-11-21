@@ -1,6 +1,7 @@
 // src/services/taskExecution.service.ts
 
-import { PrismaClient, TaskStatus, TimelineEventType } from '@prisma/client';
+import { PrismaClient, TaskStatus, TimelineEventType, NotificationType } from '@prisma/client';
+import { createNotification } from './notification.service';
 
 const prisma = new PrismaClient();
 
@@ -200,6 +201,9 @@ export async function confirmCompletion(taskId: string, posterId: string, notes?
     notes || 'Task completion confirmed by poster'
   );
 
+  // Trigger review prompts for both parties
+  await triggerReviewPrompts(taskId);
+
   // TODO: Trigger payment release here (when payments epic is done)
 
   return updatedTask;
@@ -255,6 +259,9 @@ export async function autoConfirmTask(taskId: string, hoursThreshold: number = 2
     TaskStatus.COMPLETED,
     `Task auto-confirmed after ${hoursThreshold} hours of inactivity`
   );
+
+  // Trigger review prompts for both parties
+  await triggerReviewPrompts(taskId);
 
   // TODO: Trigger payment release here
 
@@ -370,4 +377,86 @@ export async function getTasksNeedingAutoConfirm(hoursThreshold: number = 24) {
   });
 
   return tasks;
+}
+
+/**
+ * Trigger review prompts for both parties when a task is completed
+ */
+export async function triggerReviewPrompts(taskId: string) {
+  try {
+    const task = await prisma.task.findUnique({
+      where: { taskId },
+      include: {
+        contract: {
+          select: {
+            contractId: true,
+            posterId: true,
+            helperId: true,
+          },
+        },
+        poster: {
+          select: {
+            userId: true,
+            name: true,
+          },
+        },
+        assignedHelper: {
+          select: {
+            userId: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!task || !task.contract) {
+      console.warn(`Cannot trigger review prompts: Task ${taskId} not found or has no contract`);
+      return;
+    }
+
+    if (!task.assignedHelperId) {
+      console.warn(`Cannot trigger review prompts: Task ${taskId} has no assigned helper`);
+      return;
+    }
+
+    const { contract, poster, assignedHelper } = task;
+
+    if (!assignedHelper) {
+      console.warn(`Cannot trigger review prompts: Task ${taskId} has no assigned helper data`);
+      return;
+    }
+
+    // Send review prompt to poster (to review helper)
+    await createNotification({
+      userId: contract.posterId,
+      type: NotificationType.REVIEW_REQUESTED,
+      title: 'Leave a Review',
+      message: `How was your experience with ${assignedHelper.name || 'the helper'}? Leave a review to help others!`,
+      relatedTaskId: taskId,
+      metadata: {
+        contractId: contract.contractId,
+        revieweeId: contract.helperId,
+        taskTitle: task.title,
+      },
+      sendEmail: true,
+    });
+
+    // Send review prompt to helper (to review poster)
+    await createNotification({
+      userId: contract.helperId,
+      type: NotificationType.REVIEW_REQUESTED,
+      title: 'Leave a Review',
+      message: `How was your experience with ${poster.name || 'the poster'}? Leave a review to help others!`,
+      relatedTaskId: taskId,
+      metadata: {
+        contractId: contract.contractId,
+        revieweeId: contract.posterId,
+        taskTitle: task.title,
+      },
+      sendEmail: true,
+    });
+  } catch (error) {
+    console.error(`Error triggering review prompts for task ${taskId}:`, error);
+    // Don't throw - review prompts are not critical for task completion
+  }
 }
