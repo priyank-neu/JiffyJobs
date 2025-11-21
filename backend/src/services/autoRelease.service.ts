@@ -1,4 +1,15 @@
 import prisma from '../config/database';
+
+// Helper to check if database is ready
+const checkDatabaseConnection = async (): Promise<boolean> => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch (error) {
+    console.error('Database connection check failed:', error);
+    return false;
+  }
+};
 import * as paymentService from './payment.service';
 
 // Check and process auto-releases
