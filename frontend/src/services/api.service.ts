@@ -667,5 +667,22 @@ export const profileAPI = {
   },
 };
 
+// Upload API
+export const uploadAPI = {
+  getPresignedUrl: async (data: {
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+  }): Promise<{
+    uploadUrl: string;
+    fileUrl: string;
+    key: string;
+    isBase64Upload: boolean;
+  }> => {
+    const response = await api.post('/uploads/presigned-url', data);
+    return response.data;
+  },
+};
+
 export default api;
  
