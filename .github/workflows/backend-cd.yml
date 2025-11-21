@@ -1,0 +1,91 @@
+name: Backend CD
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-cd.yml'
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
+    branches:
+      - main
+      - development
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Build
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Deploy to Railway (Production)
+        if: github.ref == 'refs/heads/main'
+        uses: bervProject/railway-deploy@v1.0.0
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: backend
+          # Uncomment and configure when Railway project is set up
+          # railway_project_id: ${{ secrets.RAILWAY_PROJECT_ID }}
+        continue-on-error: true
+
+      - name: Deploy to Railway (Staging)
+        if: github.ref == 'refs/heads/development'
+        uses: bervProject/railway-deploy@v1.0.0
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+          service: backend
+          # Uncomment and configure when Railway project is set up
+          # railway_project_id: ${{ secrets.RAILWAY_PROJECT_ID_STAGING }}
+        continue-on-error: true
+
+      # Alternative: Deploy to Render
+      - name: Deploy to Render (Production)
+        if: github.ref == 'refs/heads/main'
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+        continue-on-error: true
+
+      # Alternative: Deploy to Heroku
+      - name: Deploy to Heroku (Production)
+        if: github.ref == 'refs/heads/main'
+        uses: akhileshns/heroku-deploy@v3.13.15
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          appdir: "backend"
+        continue-on-error: true
+
+      - name: Run Database Migrations (Production)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "⚠️  Database migrations should be run manually or via your deployment platform"
+          echo "For Railway: Use Railway CLI or dashboard"
+          echo "For Render: Configure in Render dashboard"
+          echo "For Heroku: Use 'heroku run npm run prisma:migrate deploy'"
+        continue-on-error: true
+
