@@ -17,11 +17,13 @@ import {
   CheckCircle,
   Cancel,
   History,
+  People,
 } from '@mui/icons-material';
 import { reportAPI } from '@/services/api.service';
 import { ReportMetrics } from '@/types/report.types';
 import AdminReportsQueue from './AdminReportsQueue';
 import AdminAuditLogs from './AdminAuditLogs';
+import AdminUserManagement from './AdminUserManagement';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -197,6 +199,7 @@ const AdminDashboard: React.FC = () => {
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label="Reports Queue" icon={<Report />} iconPosition="start" />
+            <Tab label="User Management" icon={<People />} iconPosition="start" />
             <Tab label="Audit Logs" icon={<History />} iconPosition="start" />
           </Tabs>
         </Box>
@@ -206,6 +209,10 @@ const AdminDashboard: React.FC = () => {
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
+          <AdminUserManagement />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2}>
           <AdminAuditLogs />
         </TabPanel>
       </Card>

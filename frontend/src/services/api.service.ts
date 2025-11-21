@@ -560,5 +560,24 @@ export const moderationAPI = {
   },
 };
 
+// Admin User API
+export const adminUserAPI = {
+  getAllUsers: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    accountStatus?: string;
+    role?: string;
+  }): Promise<{ users: any[]; pagination: any }> => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+
+  getUserById: async (userId: string): Promise<{ user: any }> => {
+    const response = await api.get(`/admin/users/${userId}`);
+    return response.data;
+  },
+};
+
 export default api;
  

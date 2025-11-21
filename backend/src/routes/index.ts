@@ -11,6 +11,7 @@ import notificationRoutes from './notification.routes';
 import reviewRoutes from './review.routes';
 import reportRoutes from './report.routes';
 import moderationRoutes from './moderation.routes';
+import userRoutes from './user.routes';
  
 const router = Router();
  
@@ -27,6 +28,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/reports', reportRoutes);
 router.use('/moderation', moderationRoutes);
+router.use('/admin/users', userRoutes);
  
 // Health check
 router.get('/health', (req, res) => {
