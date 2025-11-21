@@ -1,11 +1,11 @@
 import request from 'supertest';
-import { Express } from 'express';
+import { Application } from 'express';
 import prisma from '../config/database';
 import { createApp } from './helpers';
 import * as bcrypt from 'bcryptjs';
 
 describe('Authentication API', () => {
-  let app: Express;
+  let app: Application;
   let testUser: { userId: string; email: string };
 
   beforeAll(async () => {

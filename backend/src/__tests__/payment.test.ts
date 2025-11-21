@@ -1,11 +1,11 @@
 import request from 'supertest';
-import { Express } from 'express';
+import { Application } from 'express';
 import prisma from '../config/database';
 import { createApp } from './helpers';
 import * as bcrypt from 'bcryptjs';
 
 describe('Payment API', () => {
-  let app: Express;
+  let app: Application;
   let poster: { userId: string; email: string };
   let helper: { userId: string; email: string };
   let task: { taskId: string };
@@ -74,7 +74,7 @@ describe('Payment API', () => {
         posterId: poster.userId,
         acceptedBidId: bid.bidId,
         agreedAmount: 100.00,
-        status: 'PENDING_PAYMENT',
+        paymentStatus: 'PENDING',
       },
     });
 

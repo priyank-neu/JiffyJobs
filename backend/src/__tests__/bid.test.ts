@@ -1,12 +1,12 @@
 import request from 'supertest';
-import { Express } from 'express';
+import { Application } from 'express';
 import prisma from '../config/database';
 import { BidStatus } from '@prisma/client';
 import { createApp } from './helpers';
 import * as bcrypt from 'bcryptjs';
 
 describe('Bid API', () => {
-  let app: Express;
+  let app: Application;
   let poster: { userId: string; email: string };
   let helper: { userId: string; email: string };
   let task: { taskId: string };

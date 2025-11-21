@@ -1,11 +1,11 @@
 import request from 'supertest';
-import { Express } from 'express';
+import { Application } from 'express';
 import prisma from '../config/database';
 import { createApp } from './helpers';
 import * as bcrypt from 'bcryptjs';
 
 describe('Task API', () => {
-  let app: Express;
+  let app: Application;
   let user: { userId: string; email: string };
   let authToken: string;
   let location: { locationId: string };

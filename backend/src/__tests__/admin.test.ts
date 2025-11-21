@@ -1,12 +1,12 @@
 import request from 'supertest';
-import { Express } from 'express';
+import { Application } from 'express';
 import prisma from '../config/database';
 import { createApp } from './helpers';
 import * as bcrypt from 'bcryptjs';
 import { UserRole, AccountStatus } from '@prisma/client';
 
 describe('Admin API', () => {
-  let app: Express;
+  let app: Application;
   let adminUser: { userId: string; email: string };
   let regularUser: { userId: string; email: string };
   let adminToken: string;

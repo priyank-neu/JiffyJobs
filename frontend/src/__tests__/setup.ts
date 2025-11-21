@@ -1,4 +1,4 @@
-import { expect, afterEach } from 'vitest';
+import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
@@ -7,8 +7,8 @@ afterEach(() => {
   cleanup();
 });
 
-// Mock environment variables
-import.meta.env.VITE_API_URL = 'http://localhost:5001/api';
+// Mock environment variables (using vi.stubEnv for Vitest)
+// Note: VITE_API_URL should be set via test environment configuration
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
