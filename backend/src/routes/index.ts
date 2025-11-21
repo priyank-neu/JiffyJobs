@@ -9,6 +9,8 @@ import taskExecutionRoutes from './taskExecution.routes';
 import chatRoutes from './chat.routes';
 import notificationRoutes from './notification.routes';
 import reviewRoutes from './review.routes';
+import reportRoutes from './report.routes';
+import moderationRoutes from './moderation.routes';
  
 const router = Router();
  
@@ -23,6 +25,8 @@ router.use('/tasks', taskExecutionRoutes);
 router.use('/chat', chatRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/reviews', reviewRoutes);
+router.use('/reports', reportRoutes);
+router.use('/moderation', moderationRoutes);
  
 // Health check
 router.get('/health', (req, res) => {

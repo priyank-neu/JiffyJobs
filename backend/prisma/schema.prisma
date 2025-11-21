@@ -1,489 +1,444 @@
 generator client {
-
   provider = "prisma-client-js"
-
 }
- 
-datasource db {
 
+datasource db {
   provider = "postgresql"
 
-  url      = env("DATABASE_URL")
-
+  url = env("DATABASE_URL")
 }
- 
+
 model User {
+  userId String @id @default(uuid())
 
-  userId          String          @id @default(uuid())
+  email String @unique
 
-  email           String          @unique
+  passwordHash String
 
-  passwordHash    String
+  name String?
 
-  name            String?
+  phoneNumber String?
 
-  phoneNumber     String?
+  accountStatus AccountStatus @default(ACTIVE)
+  role          UserRole      @default(POSTER)
 
-  accountStatus   AccountStatus   @default(ACTIVE)
-
-  isVerified      Boolean         @default(false)
-
-  createdAt       DateTime        @default(now())
-
-  updatedAt       DateTime        @updatedAt
-
-  // Stripe Connect fields
-  stripeAccountId String?         @unique
-  stripeOnboardingComplete Boolean @default(false)
-
-  bids            Bid[]
-
-  contracts       Contract[]      @relation("HelperContracts")
-
-  posterContracts Contract[]      @relation("PosterContracts")
-
-  passwordResets  PasswordReset[]
-
-  assignedTasks   Task[]          @relation("AssignedTasks")
-
-  postedTasks     Task[]          @relation("PostedTasks")
-
-  userSkills      UserSkill[]
-
-  verifications   Verification[]
-
-  // Chat relations
-  sentMessages    ChatMessage[]      @relation("MessageSender")
-  receivedMessages ChatMessage[]     @relation("MessageReceiver")
-  posterThreads   ChatThread[]       @relation("PosterThreads")
-  helperThreads   ChatThread[]        @relation("HelperThreads")
-  notifications   Notification[]
-  messageReports  MessageReport[]
-  
-  // Task execution timeline
-  timelineEvents TaskTimeline[]
-  
-  // Reviews
-  reviewsGiven    Review[]        @relation("Reviewer")
-  reviewsReceived Review[]        @relation("Reviewee")
-  reviewReports   ReviewReport[]
- 
-  @@map("users")
-
-}
- 
-model Verification {
-
-  verificationId   String           @id @default(uuid())
-
-  userId           String
-
-  verificationType VerificationType
-
-  token            String           @unique
-
-  expiresAt        DateTime
-
-  isUsed           Boolean          @default(false)
-
-  createdAt        DateTime         @default(now())
-
-  user             User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
- 
-  @@index([userId])
-
-  @@index([token])
-
-  @@map("verifications")
-
-}
- 
-model PasswordReset {
-
-  resetId   String   @id @default(uuid())
-
-  userId    String
-
-  token     String   @unique
-
-  expiresAt DateTime
-
-  isUsed    Boolean  @default(false)
+  isVerified Boolean @default(false)
 
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
- 
-  @@index([userId])
+  updatedAt DateTime @updatedAt
 
-  @@index([token])
+  // Stripe Connect fields
+  stripeAccountId          String? @unique
+  stripeOnboardingComplete Boolean @default(false)
 
-  @@map("password_resets")
+  bids Bid[]
 
+  contracts Contract[] @relation("HelperContracts")
+
+  posterContracts Contract[] @relation("PosterContracts")
+
+  passwordResets PasswordReset[]
+
+  assignedTasks Task[] @relation("AssignedTasks")
+
+  postedTasks Task[] @relation("PostedTasks")
+
+  userSkills UserSkill[]
+
+  verifications Verification[]
+
+  // Chat relations
+  sentMessages     ChatMessage[]   @relation("MessageSender")
+  receivedMessages ChatMessage[]   @relation("MessageReceiver")
+  posterThreads    ChatThread[]    @relation("PosterThreads")
+  helperThreads    ChatThread[]    @relation("HelperThreads")
+  notifications    Notification[]
+  messageReports   MessageReport[]
+
+  // Task execution timeline
+  timelineEvents TaskTimeline[]
+
+  // Reviews
+  reviewsGiven    Review[]       @relation("Reviewer")
+  reviewsReceived Review[]       @relation("Reviewee")
+  reviewReports   ReviewReport[]
+
+  // Reports
+  taskReports     TaskReport[]
+  userReports     UserReport[] @relation("ReportedUser")
+  userReportsMade UserReport[] @relation("Reporter")
+
+  // Admin actions
+  auditLogs AuditLog[]
+
+  @@map("users")
 }
- 
+
+model Verification {
+  verificationId String @id @default(uuid())
+
+  userId String
+
+  verificationType VerificationType
+
+  token String @unique
+
+  expiresAt DateTime
+
+  isUsed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("verifications")
+}
+
+model PasswordReset {
+  resetId String @id @default(uuid())
+
+  userId String
+
+  token String @unique
+
+  expiresAt DateTime
+
+  isUsed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_resets")
+}
+
 model Task {
+  taskId String @id @default(uuid())
 
-  taskId           String       @id @default(uuid())
+  title String
 
-  title            String
+  description String
 
-  description      String
+  category TaskCategory
 
-  category         TaskCategory
+  budget Decimal @db.Decimal(10, 2)
 
-  budget           Decimal      @db.Decimal(10, 2)
+  budgetMin Decimal? @db.Decimal(10, 2)
 
-  budgetMin        Decimal?     @db.Decimal(10, 2)
+  budgetMax Decimal? @db.Decimal(10, 2)
 
-  budgetMax        Decimal?     @db.Decimal(10, 2)
+  status TaskStatus @default(OPEN)
 
-  status           TaskStatus   @default(OPEN)
+  locationId String?
 
-  locationId       String?
+  addressMasked String?
 
-  addressMasked    String?
+  taskDate DateTime?
 
-  taskDate         DateTime?
+  estimatedHours Int?
 
-  estimatedHours   Int?
-
-  posterId         String
+  posterId String
 
   assignedHelperId String?
 
-  createdAt        DateTime     @default(now())
+  createdAt DateTime @default(now())
 
-  updatedAt        DateTime     @updatedAt
+  updatedAt DateTime @updatedAt
 
-  bids             Bid[]
+  bids Bid[]
 
-  contract         Contract?
+  contract Contract?
 
-  photos           TaskPhoto[]
+  photos TaskPhoto[]
 
-  taskSkills       TaskSkill[]
+  taskSkills TaskSkill[]
 
-  chatThreads      ChatThread[]
+  chatThreads ChatThread[]
 
-  assignedHelper   User?        @relation("AssignedTasks", fields: [assignedHelperId], references: [userId], onDelete: Cascade)
+  assignedHelper User? @relation("AssignedTasks", fields: [assignedHelperId], references: [userId], onDelete: Cascade)
 
-  location         Location?    @relation(fields: [locationId], references: [locationId])
+  location Location? @relation(fields: [locationId], references: [locationId])
 
-  poster           User         @relation("PostedTasks", fields: [posterId], references: [userId], onDelete: Cascade)
+  poster User @relation("PostedTasks", fields: [posterId], references: [userId], onDelete: Cascade)
 
-  timeline       TaskTimeline[]
- 
+  timeline    TaskTimeline[]
+  taskReports TaskReport[]
+
+  isLocked     Boolean   @default(false)
+  lockedReason String?   @db.Text
+  lockedAt     DateTime?
+  lockedBy     String? // Admin userId who locked it
+
   @@index([posterId])
-
   @@index([status])
-
   @@index([category])
-
   @@index([taskDate])
-
   @@map("tasks")
-
 }
- 
+
 model TaskPhoto {
+  photoId String @id @default(uuid())
 
-  photoId      String   @id @default(uuid())
+  taskId String
 
-  taskId       String
-
-  photoUrl     String
+  photoUrl String
 
   thumbnailUrl String?
 
-  uploadedAt   DateTime @default(now())
+  uploadedAt DateTime @default(now())
 
-  task         Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
- 
+  task Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
   @@index([taskId])
-
   @@map("task_photos")
-
 }
- 
+
 model Location {
+  locationId String @id @default(uuid())
 
-  locationId String  @id @default(uuid())
+  latitude Decimal @db.Decimal(10, 8)
 
-  latitude   Decimal @db.Decimal(10, 8)
+  longitude Decimal @db.Decimal(11, 8)
 
-  longitude  Decimal @db.Decimal(11, 8)
+  address String
 
-  address    String
+  city String?
 
-  city       String?
+  state String?
 
-  state      String?
+  zipCode String?
 
-  zipCode    String?
+  country String @default("US")
 
-  country    String  @default("US")
+  tasks Task[]
 
-  tasks      Task[]
- 
   @@index([latitude, longitude])
-
   @@map("locations")
-
 }
- 
+
 model Skill {
+  skillId String @id @default(uuid())
 
-  skillId     String       @id @default(uuid())
+  name String @unique
 
-  name        String       @unique
-
-  category    TaskCategory
+  category TaskCategory
 
   description String?
 
-  createdAt   DateTime     @default(now())
+  createdAt DateTime @default(now())
 
-  updatedAt   DateTime     @updatedAt
+  updatedAt DateTime @updatedAt
 
-  taskSkills  TaskSkill[]
+  taskSkills TaskSkill[]
 
-  userSkills  UserSkill[]
- 
+  userSkills UserSkill[]
+
   @@index([category])
-
   @@map("skills")
-
 }
- 
+
 model UserSkill {
+  userSkillId String @id @default(uuid())
 
-  userSkillId     String     @id @default(uuid())
+  userId String
 
-  userId          String
+  skillId String
 
-  skillId         String
+  level SkillLevel @default(BEGINNER)
 
-  level           SkillLevel @default(BEGINNER)
+  experienceYears Int? @default(0)
 
-  experienceYears Int?       @default(0)
+  isVerified Boolean @default(false)
 
-  isVerified      Boolean    @default(false)
+  createdAt DateTime @default(now())
 
-  createdAt       DateTime   @default(now())
+  updatedAt DateTime @updatedAt
 
-  updatedAt       DateTime   @updatedAt
+  skill Skill @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
 
-  skill           Skill      @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-  user            User       @relation(fields: [userId], references: [userId], onDelete: Cascade)
- 
   @@unique([userId, skillId])
-
   @@index([userId])
-
   @@index([skillId])
-
   @@map("user_skills")
-
 }
- 
+
 model TaskSkill {
+  taskSkillId String @id @default(uuid())
 
-  taskSkillId   String     @id @default(uuid())
+  taskId String
 
-  taskId        String
-
-  skillId       String
+  skillId String
 
   requiredLevel SkillLevel @default(BEGINNER)
 
-  isRequired    Boolean    @default(true)
+  isRequired Boolean @default(true)
 
-  createdAt     DateTime   @default(now())
+  createdAt DateTime @default(now())
 
-  skill         Skill      @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
 
-  task          Task       @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
- 
+  task Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
   @@unique([taskId, skillId])
-
   @@index([taskId])
-
   @@index([skillId])
-
   @@map("task_skills")
-
 }
- 
+
 model Bid {
+  bidId String @id @default(uuid())
 
-  bidId     String    @id @default(uuid())
+  taskId String
 
-  taskId    String
+  helperId String
 
-  helperId  String
+  amount Decimal @db.Decimal(10, 2)
 
-  amount    Decimal   @db.Decimal(10, 2)
+  note String?
 
-  note      String?
+  status BidStatus @default(PENDING)
 
-  status    BidStatus @default(PENDING)
+  createdAt DateTime @default(now())
 
-  createdAt DateTime  @default(now())
+  updatedAt DateTime @updatedAt
 
-  updatedAt DateTime  @updatedAt
+  helper User @relation(fields: [helperId], references: [userId], onDelete: Cascade)
 
-  helper    User      @relation(fields: [helperId], references: [userId], onDelete: Cascade)
+  task Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 
-  task      Task      @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  contract Contract?
 
-  contract  Contract?
- 
   @@unique([taskId, helperId])
-
   @@index([taskId])
-
   @@index([helperId])
-
   @@index([status])
-
   @@map("bids")
-
 }
- 
+
 model Contract {
+  contractId String @id @default(uuid())
 
-  contractId    String    @id @default(uuid())
+  taskId String @unique
 
-  taskId        String    @unique
+  helperId String
 
-  helperId      String
+  posterId String
 
-  posterId      String
+  agreedAmount Decimal @db.Decimal(10, 2)
 
-  agreedAmount  Decimal   @db.Decimal(10, 2)
+  acceptedBidId String @unique
 
-  acceptedBidId String    @unique
+  startDate DateTime?
 
-  startDate     DateTime?
+  endDate DateTime?
 
-  endDate       DateTime?
+  terms String?
 
-  terms         String?
-
-  isActive      Boolean   @default(true)
+  isActive Boolean @default(true)
 
   // Payment fields
-  paymentStatus PaymentStatus @default(PENDING)
-  paymentIntentId String?      @unique
-  payoutId       String?       @unique
-  platformFee   Decimal?      @db.Decimal(10, 2)
-  helperAmount  Decimal?      @db.Decimal(10, 2)
-  refundId      String?       @unique
-  refundAmount  Decimal?      @db.Decimal(10, 2)
-  autoReleaseAt DateTime?
+  paymentStatus      PaymentStatus @default(PENDING)
+  paymentIntentId    String?       @unique
+  payoutId           String?       @unique
+  platformFee        Decimal?      @db.Decimal(10, 2)
+  helperAmount       Decimal?      @db.Decimal(10, 2)
+  refundId           String?       @unique
+  refundAmount       Decimal?      @db.Decimal(10, 2)
+  autoReleaseAt      DateTime?
   paymentCompletedAt DateTime?
-  payoutReleasedAt DateTime?
+  payoutReleasedAt   DateTime?
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  updatedAt     DateTime  @updatedAt
+  updatedAt DateTime @updatedAt
 
-  acceptedBid   Bid       @relation(fields: [acceptedBidId], references: [bidId], onDelete: Cascade)
+  acceptedBid Bid @relation(fields: [acceptedBidId], references: [bidId], onDelete: Cascade)
 
-  helper        User      @relation("HelperContracts", fields: [helperId], references: [userId], onDelete: Cascade)
+  helper User @relation("HelperContracts", fields: [helperId], references: [userId], onDelete: Cascade)
 
-  poster        User      @relation("PosterContracts", fields: [posterId], references: [userId], onDelete: Cascade)
+  poster User @relation("PosterContracts", fields: [posterId], references: [userId], onDelete: Cascade)
 
-  task          Task      @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  task Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 
-  payments      Payment[]
-  
-  reviews       Review[]
- 
+  payments Payment[]
+
+  reviews Review[]
+
+  isLocked     Boolean   @default(false)
+  lockedReason String?   @db.Text
+  lockedAt     DateTime?
+  lockedBy     String? // Admin userId who locked it
+
   @@index([taskId])
-
   @@index([helperId])
-
   @@index([posterId])
-
   @@index([isActive])
-
   @@index([paymentStatus])
-
   @@index([paymentIntentId])
-
   @@map("contracts")
-
 }
 
 model Payment {
+  paymentId String @id @default(uuid())
 
-  paymentId     String    @id @default(uuid())
+  contractId String
 
-  contractId    String
+  type PaymentType
 
-  type          PaymentType
+  amount Decimal @db.Decimal(10, 2)
 
-  amount        Decimal   @db.Decimal(10, 2)
+  status PaymentStatus
 
-  status        PaymentStatus
+  stripeId String? @unique
 
-  stripeId      String?   @unique
+  receiptUrl String?
 
-  receiptUrl    String?
+  metadata String? // JSON string for additional data
 
-  metadata      String?   // JSON string for additional data
+  createdAt DateTime @default(now())
 
-  createdAt     DateTime  @default(now())
+  updatedAt DateTime @updatedAt
 
-  updatedAt     DateTime  @updatedAt
-
-  contract      Contract  @relation(fields: [contractId], references: [contractId], onDelete: Cascade)
+  contract Contract @relation(fields: [contractId], references: [contractId], onDelete: Cascade)
 
   @@index([contractId])
-
   @@index([stripeId])
-
   @@index([status])
-
   @@map("payments")
-
 }
- 
-enum UserRole {
 
+enum UserRole {
   POSTER
 
   HELPER
 
   ADMIN
-
 }
- 
-enum AccountStatus {
 
+enum AccountStatus {
   ACTIVE
 
   SUSPENDED
 
   DELETED
-
 }
- 
-enum VerificationType {
 
+enum VerificationType {
   EMAIL
 
   PHONE
 
   ID_DOCUMENT
-
 }
- 
-enum TaskStatus {
 
+enum TaskStatus {
   OPEN
 
   IN_BIDDING
@@ -499,11 +454,9 @@ enum TaskStatus {
   COMPLETED
 
   CANCELLED
-
 }
- 
-enum TaskCategory {
 
+enum TaskCategory {
   HOME_REPAIR
 
   CLEANING
@@ -523,11 +476,9 @@ enum TaskCategory {
   TUTORING
 
   OTHER
-
 }
- 
-enum SkillLevel {
 
+enum SkillLevel {
   BEGINNER
 
   INTERMEDIATE
@@ -535,11 +486,9 @@ enum SkillLevel {
   ADVANCED
 
   EXPERT
-
 }
- 
-enum BidStatus {
 
+enum BidStatus {
   PENDING
 
   ACCEPTED
@@ -547,7 +496,6 @@ enum BidStatus {
   REJECTED
 
   WITHDRAWN
-
 }
 
 enum PaymentStatus {
@@ -581,156 +529,145 @@ enum TimelineEventType {
 }
 
 model TaskTimeline {
-  timelineId String            @id @default(uuid())
+  timelineId String @id @default(uuid())
   taskId     String
-  task       Task              @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  
-  eventType  TimelineEventType
-  userId     String?
-  user       User?             @relation(fields: [userId], references: [userId])
-  
-  oldStatus  TaskStatus?
-  newStatus  TaskStatus?
-  notes      String?
-  
-  createdAt  DateTime          @default(now())
+  task       Task   @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  eventType TimelineEventType
+  userId    String?
+  user      User?             @relation(fields: [userId], references: [userId])
+
+  oldStatus TaskStatus?
+  newStatus TaskStatus?
+  notes     String?
+
+  createdAt DateTime @default(now())
 
   @@index([taskId, createdAt])
   @@map("task_timeline")
 }
 
 model ChatThread {
+  threadId String @id @default(uuid())
 
-  threadId    String        @id @default(uuid())
+  taskId String
 
-  taskId      String
+  posterId String
 
-  posterId    String
+  helperId String
 
-  helperId    String
+  createdAt DateTime @default(now())
 
-  createdAt   DateTime      @default(now())
+  updatedAt DateTime @updatedAt
 
-  updatedAt   DateTime      @updatedAt
+  task Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 
-  task        Task          @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  poster User @relation("PosterThreads", fields: [posterId], references: [userId], onDelete: Cascade)
 
-  poster      User          @relation("PosterThreads", fields: [posterId], references: [userId], onDelete: Cascade)
+  helper User @relation("HelperThreads", fields: [helperId], references: [userId], onDelete: Cascade)
 
-  helper      User          @relation("HelperThreads", fields: [helperId], references: [userId], onDelete: Cascade)
+  messages ChatMessage[]
 
-  messages    ChatMessage[]
- 
   @@unique([taskId, helperId])
-
   @@index([taskId])
-
   @@index([posterId])
-
   @@index([helperId])
-
   @@map("chat_threads")
-
 }
 
 model ChatMessage {
+  messageId String @id @default(uuid())
 
-  messageId   String        @id @default(uuid())
+  threadId String
 
-  threadId    String
+  senderId String
 
-  senderId    String
+  receiverId String
 
-  receiverId  String
+  body String @db.Text
 
-  body        String        @db.Text
+  readAt DateTime?
 
-  readAt      DateTime?
+  isDeleted Boolean @default(false)
 
-  isDeleted   Boolean       @default(false)
+  createdAt DateTime @default(now())
 
-  createdAt   DateTime      @default(now())
+  thread ChatThread @relation(fields: [threadId], references: [threadId], onDelete: Cascade)
 
-  thread      ChatThread    @relation(fields: [threadId], references: [threadId], onDelete: Cascade)
+  sender User @relation("MessageSender", fields: [senderId], references: [userId], onDelete: Cascade)
 
-  sender      User          @relation("MessageSender", fields: [senderId], references: [userId], onDelete: Cascade)
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [userId], onDelete: Cascade)
 
-  receiver    User          @relation("MessageReceiver", fields: [receiverId], references: [userId], onDelete: Cascade)
+  reports MessageReport[]
 
-  reports     MessageReport[]
- 
   @@index([threadId])
-
   @@index([senderId])
-
   @@index([receiverId])
-
   @@index([createdAt])
-
   @@map("chat_messages")
-
 }
 
 model Notification {
+  notificationId String @id @default(uuid())
 
-  notificationId String          @id @default(uuid())
+  userId String
 
-  userId         String
+  type NotificationType
 
-  type           NotificationType
+  title String
 
-  title          String
+  message String @db.Text
 
-  message        String          @db.Text
+  isRead Boolean @default(false)
 
-  isRead         Boolean         @default(false)
-
-  relatedTaskId  String?
+  relatedTaskId String?
 
   relatedThreadId String?
 
-  relatedBidId   String?
+  relatedBidId String?
 
-  metadata       Json?
+  metadata Json?
 
-  createdAt      DateTime        @default(now())
+  createdAt DateTime @default(now())
 
-  readAt         DateTime?
+  readAt DateTime?
 
-  user           User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
- 
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
   @@index([userId])
-
   @@index([isRead])
-
   @@index([createdAt])
-
   @@map("notifications")
-
 }
 
 model MessageReport {
+  reportId String @id @default(uuid())
 
-  reportId   String        @id @default(uuid())
-
-  messageId  String
+  messageId String
 
   reporterId String
 
-  reason     String?       @db.Text
+  reason String? @db.Text
 
-  createdAt  DateTime      @default(now())
+  status ReportStatus @default(OPEN)
 
-  message    ChatMessage   @relation(fields: [messageId], references: [messageId], onDelete: Cascade)
+  evidence String? @db.Text // JSON array of screenshot URLs
 
-  reporter   User          @relation(fields: [reporterId], references: [userId], onDelete: Cascade)
- 
+  reviewedAt      DateTime?
+  reviewedBy      String? // Admin userId who reviewed
+  resolutionNotes String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  message ChatMessage @relation(fields: [messageId], references: [messageId], onDelete: Cascade)
+
+  reporter User @relation(fields: [reporterId], references: [userId], onDelete: Cascade)
+
   @@index([messageId])
-
   @@index([reporterId])
-
+  @@index([status])
   @@map("message_reports")
-
 }
 
 enum NotificationType {
@@ -757,67 +694,151 @@ enum ReviewTag {
 }
 
 model Review {
-  reviewId      String      @id @default(uuid())
-  
-  contractId    String
-  reviewerId    String      // User who wrote the review
-  revieweeId    String      // User being reviewed
-  
-  rating        Int         // 1-5 stars
-  comment       String?     @db.Text // Optional comment, max 300 chars
-  tags          ReviewTag[] // Up to 3 tags
-  
-  isEdited      Boolean     @default(false)
-  editedAt      DateTime?
-  
-  isHidden      Boolean     @default(false) // Hidden by moderation
-  
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  
-  contract      Contract    @relation(fields: [contractId], references: [contractId], onDelete: Cascade)
-  reviewer      User        @relation("Reviewer", fields: [reviewerId], references: [userId], onDelete: Cascade)
-  reviewee      User        @relation("Reviewee", fields: [revieweeId], references: [userId], onDelete: Cascade)
-  
-  reports       ReviewReport[]
-  
+  reviewId String @id @default(uuid())
+
+  contractId String
+  reviewerId String // User who wrote the review
+  revieweeId String // User being reviewed
+
+  rating  Int // 1-5 stars
+  comment String?     @db.Text // Optional comment, max 300 chars
+  tags    ReviewTag[] // Up to 3 tags
+
+  isEdited Boolean   @default(false)
+  editedAt DateTime?
+
+  isHidden Boolean @default(false) // Hidden by moderation
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contract Contract @relation(fields: [contractId], references: [contractId], onDelete: Cascade)
+  reviewer User     @relation("Reviewer", fields: [reviewerId], references: [userId], onDelete: Cascade)
+  reviewee User     @relation("Reviewee", fields: [revieweeId], references: [userId], onDelete: Cascade)
+
+  reports ReviewReport[]
+
   @@unique([contractId, reviewerId]) // One review per contract per reviewer
   @@index([contractId])
   @@index([reviewerId])
   @@index([revieweeId])
   @@index([rating])
   @@index([createdAt])
-  
   @@map("reviews")
 }
 
 model ReviewReport {
-  reportId      String      @id @default(uuid())
-  
-  reviewId     String
-  reporterId   String
-  reason       String?      @db.Text
-  
-  status       ReportStatus @default(PENDING)
-  
-  createdAt    DateTime     @default(now())
-  reviewedAt   DateTime?
-  reviewedBy   String?      // Admin userId who reviewed
-  
-  review       Review       @relation(fields: [reviewId], references: [reviewId], onDelete: Cascade)
-  reporter     User         @relation(fields: [reporterId], references: [userId], onDelete: Cascade)
-  
+  reportId String @id @default(uuid())
+
+  reviewId   String
+  reporterId String
+  reason     String  @db.Text
+  evidence   String? @db.Text // JSON array of screenshot URLs
+
+  status ReportStatus @default(OPEN)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  reviewedAt      DateTime?
+  reviewedBy      String? // Admin userId who reviewed
+  resolutionNotes String?   @db.Text
+
+  review   Review @relation(fields: [reviewId], references: [reviewId], onDelete: Cascade)
+  reporter User   @relation(fields: [reporterId], references: [userId], onDelete: Cascade)
+
   @@index([reviewId])
   @@index([reporterId])
   @@index([status])
-  
+  @@index([createdAt])
   @@map("review_reports")
 }
 
 enum ReportStatus {
-  PENDING
-  REVIEWED
+  OPEN
   RESOLVED
-  DISMISSED
+  CLOSED
 }
- 
+
+enum ReportType {
+  TASK
+  USER
+  MESSAGE
+  REVIEW
+}
+
+model TaskReport {
+  reportId String @id @default(uuid())
+
+  taskId     String
+  reporterId String
+  reason     String  @db.Text
+  evidence   String? @db.Text // JSON array of screenshot URLs
+
+  status ReportStatus @default(OPEN)
+
+  reviewedAt      DateTime?
+  reviewedBy      String? // Admin userId who reviewed
+  resolutionNotes String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task     Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  reporter User @relation(fields: [reporterId], references: [userId], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("task_reports")
+}
+
+model UserReport {
+  reportId String @id @default(uuid())
+
+  reportedUserId String
+  reporterId     String
+  reason         String  @db.Text
+  evidence       String? @db.Text // JSON array of screenshot URLs
+
+  status ReportStatus @default(OPEN)
+
+  reviewedAt      DateTime?
+  reviewedBy      String? // Admin userId who reviewed
+  resolutionNotes String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reportedUser User @relation("ReportedUser", fields: [reportedUserId], references: [userId], onDelete: Cascade)
+  reporter     User @relation("Reporter", fields: [reporterId], references: [userId], onDelete: Cascade)
+
+  @@index([reportedUserId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("user_reports")
+}
+
+model AuditLog {
+  auditLogId String @id @default(uuid())
+
+  adminId    String // User who performed the action
+  action     String // e.g., "SUSPEND_USER", "HIDE_REVIEW", "LOCK_TASK", "REFUND"
+  entityType String // e.g., "User", "Task", "Contract", "Review", "Report"
+  entityId   String // ID of the affected entity
+  reportId   String? // Related report if action was taken on a report
+
+  details String? @db.Text // JSON object with action details
+  notes   String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  admin User @relation(fields: [adminId], references: [userId], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([entityType, entityId])
+  @@index([reportId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

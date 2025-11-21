@@ -483,7 +483,7 @@ export const reportReview = async (
     where: {
       reviewId,
       reporterId,
-      status: 'PENDING',
+      status: 'OPEN',
     },
   });
 
@@ -496,8 +496,8 @@ export const reportReview = async (
     data: {
       reviewId,
       reporterId,
-      reason: reason || undefined,
-      status: 'PENDING',
+      reason: reason || 'No reason provided',
+      status: 'OPEN',
     },
   });
 
