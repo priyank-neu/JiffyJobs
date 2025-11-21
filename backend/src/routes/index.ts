@@ -12,6 +12,7 @@ import reviewRoutes from './review.routes';
 import reportRoutes from './report.routes';
 import moderationRoutes from './moderation.routes';
 import userRoutes from './user.routes';
+import profileRoutes from './profile.routes';
  
 const router = Router();
  
@@ -29,6 +30,7 @@ router.use('/reviews', reviewRoutes);
 router.use('/reports', reportRoutes);
 router.use('/moderation', moderationRoutes);
 router.use('/admin/users', userRoutes);
+router.use('/profile', profileRoutes);
  
 // Health check
 router.get('/health', (req, res) => {
