@@ -358,5 +358,85 @@ export const paymentAPI = {
   },
 };
 
+// Review API
+export const reviewAPI = {
+  // Create a review
+  createReview: async (data: {
+    contractId: string;
+    revieweeId: string;
+    rating: number;
+    comment?: string;
+    tags?: string[];
+  }): Promise<any> => {
+    const response = await api.post('/reviews', data);
+    return response.data;
+  },
+
+  // Update a review
+  updateReview: async (reviewId: string, data: {
+    rating?: number;
+    comment?: string;
+    tags?: string[];
+  }): Promise<any> => {
+    const response = await api.put(`/reviews/${reviewId}`, data);
+    return response.data;
+  },
+
+  // Delete a review
+  deleteReview: async (reviewId: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/reviews/${reviewId}`);
+    return response.data;
+  },
+
+  // Get reviews for a user
+  getUserReviews: async (userId: string, page: number = 1, limit: number = 20): Promise<{
+    reviews: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> => {
+    const response = await api.get(`/reviews/user/${userId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  // Get review statistics for a user
+  getUserReviewStats: async (userId: string): Promise<{
+    averageRating: number;
+    totalCount: number;
+    commonTags: string[];
+  }> => {
+    const response = await api.get(`/reviews/user/${userId}/stats`);
+    return response.data;
+  },
+
+  // Get review for a specific contract
+  getContractReview: async (contractId: string): Promise<any> => {
+    const response = await api.get(`/reviews/contract/${contractId}`);
+    return response.data;
+  },
+
+  // Check if user can review a contract
+  canUserReviewContract: async (contractId: string): Promise<{
+    canReview: boolean;
+    reason?: string;
+  }> => {
+    const response = await api.get(`/reviews/contract/${contractId}/can-review`);
+    return response.data;
+  },
+
+  // Report a review
+  reportReview: async (reviewId: string, reason?: string): Promise<any> => {
+    const response = await api.post(`/reviews/${reviewId}/report`, { reason });
+    return response.data;
+  },
+};
+
 export default api;
  
