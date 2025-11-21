@@ -205,10 +205,6 @@ export const releasePayout = async (contractId: string): Promise<void> => {
       platformFee: platformFee.toString(),
       originalAmount: contract.agreedAmount.toString(),
     },
-    // Optional: Add transfer group if you need to track multiple related transfers
-    transfer_data: {
-      amount: Math.round(helperAmount * 100),
-    },
   });
 
   // Update contract with payout information

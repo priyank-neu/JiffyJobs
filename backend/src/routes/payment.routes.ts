@@ -16,6 +16,7 @@ router.get('/connect/status', authenticate, paymentController.getConnectAccountS
 router.post('/confirm', authenticate, paymentController.confirmPayment);
 router.post('/payout/:contractId', authenticate, paymentController.releasePayout);
 router.get('/history/:contractId', authenticate, paymentController.getPaymentHistory);
+router.post('/sync/:contractId', authenticate, paymentController.syncPaymentStatus);
 
 // Refund (admin only)
 router.post('/refund/:contractId', authenticate, paymentController.refundPayment);

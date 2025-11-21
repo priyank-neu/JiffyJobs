@@ -351,6 +351,11 @@ export const paymentAPI = {
     const response = await api.get('/payments/publishable-key');
     return response.data;
   },
+
+  syncPaymentStatus: async (contractId: string): Promise<{ message: string; status: string }> => {
+    const response = await api.post(`/payments/sync/${contractId}`);
+    return response.data;
+  },
 };
 
 export default api;

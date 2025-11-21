@@ -245,17 +245,30 @@ const PaymentStatus: React.FC<PaymentStatusProps> = ({ contract, onRefresh }) =>
             </Box>
           )}
 
-          {onRefresh && (
-            <Button
-              startIcon={<Refresh />}
-              onClick={onRefresh}
-              disabled={loading}
-              variant="outlined"
-              fullWidth
-            >
-              {loading ? <CircularProgress size={20} /> : 'Refresh Status'}
-            </Button>
-          )}
+          <Button
+            startIcon={<Refresh />}
+            onClick={async () => {
+              try {
+                setLoading(true);
+                // Sync payment status from Stripe
+                await paymentAPI.syncPaymentStatus(contract.contractId);
+                // Then refresh the data
+                await fetchPaymentHistory();
+                if (onRefresh) {
+                  onRefresh();
+                }
+              } catch (error) {
+                console.error('Error syncing payment status:', error);
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            variant="outlined"
+            fullWidth
+          >
+            {loading ? <CircularProgress size={20} /> : 'Refresh Status'}
+          </Button>
         </Stack>
       </CardContent>
     </Card>

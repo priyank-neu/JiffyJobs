@@ -274,6 +274,102 @@ export const getPublishableKey = async (req: AuthRequest, res: Response): Promis
   }
 };
 
+// Sync payment status from Stripe (for testing/manual sync)
+export const syncPaymentStatus = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { contractId } = req.params;
+    if (!contractId) {
+      res.status(400).json({ error: 'Contract ID is required' });
+      return;
+    }
+
+    const contract = await prisma.contract.findUnique({
+      where: { contractId },
+      select: { paymentIntentId: true, posterId: true, helperId: true },
+    });
+
+    if (!contract) {
+      res.status(404).json({ error: 'Contract not found' });
+      return;
+    }
+
+    // Verify user has permission
+    if (contract.posterId !== req.user.userId && contract.helperId !== req.user.userId) {
+      res.status(403).json({ error: 'Access denied' });
+      return;
+    }
+
+    if (!contract.paymentIntentId) {
+      res.status(400).json({ error: 'No payment intent found for this contract' });
+      return;
+    }
+
+    // Retrieve payment intent from Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const paymentIntent = await stripe.paymentIntents.retrieve(contract.paymentIntentId);
+
+    console.log('Payment Intent Status:', paymentIntent.status);
+    console.log('Payment Intent ID:', paymentIntent.id);
+
+    // Update status based on Stripe's status
+    if (paymentIntent.status === 'succeeded') {
+      // Payment succeeded - update to completed
+      await paymentService.confirmPayment(contract.paymentIntentId);
+      res.status(200).json({ 
+        message: 'Payment status synced successfully',
+        status: 'COMPLETED',
+        stripeStatus: paymentIntent.status
+      });
+    } else if (paymentIntent.status === 'requires_payment_method' || 
+               paymentIntent.status === 'canceled' ||
+               paymentIntent.status === 'requires_capture') {
+      // Payment failed or was canceled
+      await prisma.contract.update({
+        where: { contractId },
+        data: { paymentStatus: 'FAILED' },
+      });
+      await prisma.payment.updateMany({
+        where: { stripeId: contract.paymentIntentId },
+        data: { status: 'FAILED' },
+      });
+      res.status(200).json({ 
+        message: 'Payment status synced - payment failed',
+        status: 'FAILED',
+        stripeStatus: paymentIntent.status,
+        reason: paymentIntent.last_payment_error?.message || 'Payment was canceled or requires payment method'
+      });
+    } else if (paymentIntent.status === 'processing' || 
+               paymentIntent.status === 'requires_confirmation' ||
+               paymentIntent.status === 'requires_action') {
+      // Still processing - don't change status
+      res.status(200).json({ 
+        message: 'Payment is still processing',
+        status: 'PROCESSING',
+        stripeStatus: paymentIntent.status
+      });
+    } else {
+      // Unknown status - keep as processing
+      res.status(200).json({ 
+        message: 'Payment status unknown',
+        status: 'PROCESSING',
+        stripeStatus: paymentIntent.status
+      });
+    }
+  } catch (error: any) {
+    console.error('Error syncing payment status:', error);
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+};
+
 // Handle Stripe webhook
 export const handleWebhook = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
