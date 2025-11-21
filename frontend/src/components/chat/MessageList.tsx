@@ -7,12 +7,6 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
   Alert,
   Snackbar,
 } from '@mui/material';
@@ -21,6 +15,8 @@ import FlagIcon from '@mui/icons-material/Flag';
 import { ChatMessage } from '@/types/chat.types';
 import { useAuth } from '@/contexts/AuthContext';
 import { chatAPI } from '@/services/api.service';
+import ReportForm from '../reports/ReportForm';
+import { ReportType } from '@/types/report.types';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -36,9 +32,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading = false }
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportReason, setReportReason] = useState('');
-  const [isReporting, setIsReporting] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -60,40 +54,10 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading = false }
     setSelectedMessage(null);
   };
 
-  const handleReportClick = () => {
-    handleMenuClose();
-    setReportDialogOpen(true);
-    setReportReason('');
-  };
-
-  const handleReportCancel = () => {
-    setReportDialogOpen(false);
-    setReportReason('');
-    setSelectedMessage(null);
-  };
-
-  const handleReportSubmit = async () => {
+  const handleReport = () => {
     if (!selectedMessage) return;
-
-    try {
-      setIsReporting(true);
-      await chatAPI.reportMessage(selectedMessage.messageId, reportReason || undefined);
-      setSnackbar({
-        open: true,
-        message: 'Message reported successfully. Our team will review it.',
-        severity: 'success',
-      });
-      handleReportCancel();
-    } catch (error: unknown) {
-      const apiError = error as { response?: { data?: { error?: string } } };
-      setSnackbar({
-        open: true,
-        message: apiError.response?.data?.error || 'Failed to report message. Please try again.',
-        severity: 'error',
-      });
-    } finally {
-      setIsReporting(false);
-    }
+    setShowReportDialog(true);
+    handleMenuClose();
   };
 
   const handleSnackbarClose = () => {
@@ -252,46 +216,34 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading = false }
           horizontal: 'right',
         }}
       >
-        <MenuItem onClick={handleReportClick}>
+        <MenuItem onClick={handleReport}>
           <FlagIcon sx={{ mr: 1, fontSize: '1rem' }} />
           Report Message
         </MenuItem>
       </Menu>
 
       {/* Report Dialog */}
-      <Dialog open={reportDialogOpen} onClose={handleReportCancel} maxWidth="sm" fullWidth>
-        <DialogTitle>Report Message</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Please provide a reason for reporting this message. Our moderation team will review it.
-          </Typography>
-          <TextField
-            autoFocus
-            multiline
-            rows={4}
-            fullWidth
-            label="Reason (optional)"
-            placeholder="Describe why you're reporting this message..."
-            value={reportReason}
-            onChange={(e) => setReportReason(e.target.value)}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleReportCancel} disabled={isReporting}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleReportSubmit}
-            variant="contained"
-            color="error"
-            disabled={isReporting}
-            startIcon={<FlagIcon />}
-          >
-            {isReporting ? 'Reporting...' : 'Report Message'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {selectedMessage && (
+        <ReportForm
+          open={showReportDialog}
+          onClose={() => {
+            setShowReportDialog(false);
+            setSelectedMessage(null);
+          }}
+          onSuccess={() => {
+            setShowReportDialog(false);
+            setSelectedMessage(null);
+            setSnackbar({
+              open: true,
+              message: 'Message reported successfully',
+              severity: 'success',
+            });
+          }}
+          type={ReportType.MESSAGE}
+          targetId={selectedMessage.messageId}
+          targetTitle={`Message from ${selectedMessage.sender?.name || selectedMessage.sender?.email || 'User'}`}
+        />
+      )}
 
       {/* Snackbar for feedback */}
       <Snackbar

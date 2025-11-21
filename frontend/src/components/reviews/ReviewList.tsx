@@ -19,6 +19,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FlagIcon from '@mui/icons-material/Flag';
 import { Review, REVIEW_TAG_LABELS } from '@/types/review.types';
 import { reviewAPI } from '@/services/api.service';
+import ReportForm from '../reports/ReportForm';
+import { ReportType } from '@/types/report.types';
 
 interface ReviewListProps {
   userId: string;
@@ -33,6 +35,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ userId, showActions = false }) 
   const [totalPages, setTotalPages] = useState(1);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   const fetchReviews = async () => {
     setLoading(true);
@@ -62,16 +65,10 @@ const ReviewList: React.FC<ReviewListProps> = ({ userId, showActions = false }) 
     setSelectedReview(null);
   };
 
-  const handleReport = async () => {
+  const handleReport = () => {
     if (!selectedReview) return;
-
-    try {
-      await reviewAPI.reportReview(selectedReview.reviewId);
-      alert('Review reported successfully. Thank you for helping keep our community safe.');
-      handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to report review');
-    }
+    setShowReportDialog(true);
+    handleMenuClose();
   };
 
   if (loading) {
@@ -182,6 +179,24 @@ const ReviewList: React.FC<ReviewListProps> = ({ userId, showActions = false }) 
           Report Review
         </MenuItem>
       </Menu>
+
+      {/* Report Dialog */}
+      {selectedReview && (
+        <ReportForm
+          open={showReportDialog}
+          onClose={() => {
+            setShowReportDialog(false);
+            setSelectedReview(null);
+          }}
+          onSuccess={() => {
+            setShowReportDialog(false);
+            setSelectedReview(null);
+          }}
+          type={ReportType.REVIEW}
+          targetId={selectedReview.reviewId}
+          targetTitle={`Review by ${selectedReview.reviewer.name || selectedReview.reviewer.email}`}
+        />
+      )}
     </Box>
   );
 };
