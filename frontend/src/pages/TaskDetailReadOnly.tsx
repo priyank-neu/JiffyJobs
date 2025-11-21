@@ -38,6 +38,7 @@ const TaskDetailReadOnly: React.FC = () => {
     if (taskId) {
       fetchTask();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const fetchTask = async () => {
@@ -46,8 +47,9 @@ const TaskDetailReadOnly: React.FC = () => {
       setError(null);
       const response = await taskAPI.getTaskByIdPublic(taskId!);
       setTask(response.task);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to load task');
     } finally {
       setLoading(false);
     }

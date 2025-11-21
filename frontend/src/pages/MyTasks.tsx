@@ -40,8 +40,9 @@ const MyTasks: React.FC = () => {
     try {
       const response = await taskAPI.getMyTasks();
       setTasks(response.tasks);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch tasks');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Failed to fetch tasks');
     } finally {
       setLoading(false);
     }
@@ -53,8 +54,9 @@ const MyTasks: React.FC = () => {
     try {
       await taskAPI.cancelTask(taskId);
       fetchTasks();
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to cancel task');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      alert(apiError.response?.data?.error || 'Failed to cancel task');
     }
   };
  

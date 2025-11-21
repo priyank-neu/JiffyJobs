@@ -14,7 +14,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
@@ -75,6 +75,7 @@ const MarkerCluster: React.FC<{
 
   useEffect(() => {
     // Create marker cluster group
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clusterGroup = (L as any).markerClusterGroup({
       chunkedLoading: true,
       maxClusterRadius: 50,
@@ -126,6 +127,7 @@ const MarkerCluster: React.FC<{
       `);
 
       // Store task click handler globally
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).taskClick = (taskId: string) => {
         const task = tasks.find(t => t.taskId === taskId);
         if (task && onTaskClick) {

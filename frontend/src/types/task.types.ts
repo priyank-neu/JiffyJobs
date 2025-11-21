@@ -140,6 +140,16 @@ export interface Bid {
     name?: string;
     email: string;
   };
+  task?: {
+    taskId: string;
+    title: string;
+    status: TaskStatus;
+    poster?: {
+      userId: string;
+      name?: string;
+      email: string;
+    };
+  };
 }
 
 export interface CreateBidData {

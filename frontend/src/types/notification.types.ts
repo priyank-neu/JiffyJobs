@@ -16,7 +16,7 @@ export interface Notification {
   relatedTaskId: string | null;
   relatedThreadId: string | null;
   relatedBidId: string | null;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   createdAt: string;
   readAt: string | null;
 }

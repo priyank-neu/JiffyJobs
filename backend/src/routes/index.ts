@@ -4,6 +4,7 @@ import taskRoutes from './task.routes';
 import uploadRoutes from './upload.routes';
 import discoveryRoutes from './discovery.routes';
 import bidRoutes from './bid.routes';
+import taskExecutionRoutes from './taskExecution.routes';
 import chatRoutes from './chat.routes';
 import notificationRoutes from './notification.routes';
  
@@ -15,6 +16,7 @@ router.use('/tasks', taskRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/discover', discoveryRoutes);
 router.use('/bids', bidRoutes);
+router.use('/tasks', taskExecutionRoutes);
 router.use('/chat', chatRoutes);
 router.use('/notifications', notificationRoutes);
  

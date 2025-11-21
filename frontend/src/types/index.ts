@@ -31,3 +31,14 @@ export interface ResetPasswordData {
   token: string;
   newPassword: string;
 }
+
+// Error type for API errors
+export interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+      message?: string;
+    };
+  };
+  message?: string;
+}

@@ -125,6 +125,22 @@ export const taskAPI = {
     const response = await api.delete(`/tasks/${taskId}`);
     return response.data;
   },
+
+  startTask: async (taskId: string): Promise<{ message: string; task: Task }> => {
+    const response = await api.post(`/tasks/${taskId}/start`);
+    return response.data;
+  },
+
+  completeTask: async (taskId: string, notes: string): Promise<{ message: string; task: Task }> => {
+    const response = await api.post(`/tasks/${taskId}/complete`, { notes });
+    return response.data;
+  },
+
+  confirmTaskCompletion: async (taskId: string, notes: string): Promise<{ message: string; task: Task }> => {
+    const response = await api.post(`/tasks/${taskId}/confirm`, { notes });
+    return response.data;
+  },
+  
 };
 
 // Discovery API
@@ -147,7 +163,7 @@ export const discoveryAPI = {
     sortOrder?: 'asc' | 'desc';
   }): Promise<{
     message: string;
-    tasks: any[];
+    tasks: Task[];
     pagination: {
       page: number;
       limit: number;
@@ -191,7 +207,7 @@ export const bidAPI = {
 
   // Get helper's bids
   getMyBids: async (filters?: BidFilter, sort?: BidSortOptions): Promise<{ message: string; bids: Bid[] }> => {
-    const params: any = {};
+    const params: Record<string, unknown> = {};
     if (filters?.status) params.status = filters.status;
     if (filters?.taskId) params.taskId = filters.taskId;
     if (sort?.field) params.sortBy = sort.field;
@@ -203,7 +219,7 @@ export const bidAPI = {
 
   // Get bids for a specific task
   getTaskBids: async (taskId: string, filters?: BidFilter, sort?: BidSortOptions): Promise<{ message: string; bids: Bid[] }> => {
-    const params: any = {};
+    const params: Record<string, unknown> = {};
     if (filters?.status) params.status = filters.status;
     if (sort?.field) params.sortBy = sort.field;
     if (sort?.order) params.sortOrder = sort.order;
@@ -248,7 +264,7 @@ export const chatAPI = {
   // Get all threads for the authenticated user
   getThreads: async (): Promise<ChatThread[]> => {
     const response = await api.get('/chat/threads');
-    return response.data;
+    return response.data.threads || response.data || [];
   },
 
   // Get a specific thread

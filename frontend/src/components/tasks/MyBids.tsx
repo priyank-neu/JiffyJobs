@@ -40,9 +40,10 @@ const MyBids: React.FC = () => {
       setError(null);
       const response = await bidAPI.getMyBids();
       setBids(response.bids);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching my bids:', err);
-      setError(err.response?.data?.message || 'Failed to load bids');
+      const apiError = err as { response?: { data?: { message?: string } } };
+      setError(apiError.response?.data?.message || 'Failed to load bids');
     } finally {
       setLoading(false);
     }
@@ -53,9 +54,10 @@ const MyBids: React.FC = () => {
       await bidAPI.withdrawBid(bidId);
       // Refresh the bids list
       fetchMyBids();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error withdrawing bid:', err);
-      setError(err.response?.data?.message || 'Failed to withdraw bid');
+      const apiError = err as { response?: { data?: { message?: string } } };
+      setError(apiError.response?.data?.message || 'Failed to withdraw bid');
     }
   };
 
@@ -154,7 +156,7 @@ const MyBids: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" gutterBottom>
-                    Task ID: {bid.taskId}
+                  {bid.task?.title || 'Task'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     Click "View Task" to see full details
@@ -179,7 +181,7 @@ const MyBids: React.FC = () => {
                   <Chip
                     icon={getStatusIcon(bid.status)}
                     label={bid.status}
-                    color={getStatusColor(bid.status) as any}
+                    color={getStatusColor(bid.status) as 'default' | 'primary' | 'success' | 'warning' | 'error'}
                     size="small"
                     sx={{ mb: 1 }}
                   />
