@@ -21,7 +21,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { taskAPI, bidAPI } from '@/services/api.service';
 import { chatAPI } from '@/services/api.service';
-import { Task, TaskStatus } from '@/types/task.types';
+import { Task, TaskStatus, Contract } from '@/types/task.types';
 import { ChatThread } from '@/types/chat.types';
 import { useAuth } from '@/contexts/AuthContext';
 import { TaskDetailCard, TaskDetails, TaskDescription, TaskLocation, TaskPoster } from '../components/tasks/TaskDetailCard';
@@ -32,6 +32,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import TaskCompletionDialog from './TaskCompletionDialog';
 import ChatWindow from '../components/chat/ChatWindow';
+import PaymentStatus from '../components/payments/PaymentStatus';
 
 const statusColors: Record<TaskStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   [TaskStatus.OPEN]: 'primary',
@@ -56,6 +57,7 @@ const TaskDetail: React.FC = () => {
   const navigate = useNavigate();
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [contract, setContract] = useState<Contract | null>(null);
 
   useEffect(() => {
     fetchTask();
@@ -73,6 +75,18 @@ const TaskDetail: React.FC = () => {
     try {
       const response = await taskAPI.getTaskById(taskId);
       setTask(response.task);
+      
+      // Fetch contract if task has one
+      if (response.task.status !== TaskStatus.OPEN && response.task.status !== TaskStatus.CANCELLED) {
+        try {
+          const contractResponse = await bidAPI.getTaskContract(taskId);
+          setContract(contractResponse.contract);
+        } catch (contractErr) {
+          // Contract might not exist yet, which is fine
+          console.log('No contract found for this task');
+          setContract(null);
+        }
+      }
     } catch (err: unknown) {
       const apiError = err as { response?: { data?: { error?: string } } };
       setError(apiError.response?.data?.error || 'Failed to fetch task');
@@ -398,6 +412,20 @@ const TaskDetail: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Payment Status - Show when contract exists */}
+              {contract && (contract.paymentStatus || contract.paymentIntentId) && (
+                <Card>
+                  <CardContent>
+                    <PaymentStatus
+                      contract={contract}
+                      onRefresh={() => {
+                        fetchTask();
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Chat Section */}
               {user && task && chatThread && (

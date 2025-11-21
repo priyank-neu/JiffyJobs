@@ -16,6 +16,11 @@ interface EnvConfig {
   RATE_LIMIT_WINDOW_MS: number;
   RATE_LIMIT_MAX_REQUESTS: number;
   COOKIE_SECRET: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_PUBLISHABLE_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
+  PLATFORM_FEE_PERCENTAGE: number;
+  AUTO_RELEASE_HOURS: number;
 }
 
 const getEnvVar = (key: string, defaultValue: string): string => {
@@ -40,6 +45,11 @@ const config: EnvConfig = {
   RATE_LIMIT_WINDOW_MS: parseInt(getEnvVar('RATE_LIMIT_WINDOW_MS', '900000'), 10),
   RATE_LIMIT_MAX_REQUESTS: parseInt(getEnvVar('RATE_LIMIT_MAX_REQUESTS', '100'), 10),
   COOKIE_SECRET: getEnvVar('COOKIE_SECRET', 'fallback_cookie_secret_for_development'),
+  STRIPE_SECRET_KEY: getEnvVar('STRIPE_SECRET_KEY', ''),
+  STRIPE_PUBLISHABLE_KEY: getEnvVar('STRIPE_PUBLISHABLE_KEY', ''),
+  STRIPE_WEBHOOK_SECRET: getEnvVar('STRIPE_WEBHOOK_SECRET', ''),
+  PLATFORM_FEE_PERCENTAGE: parseFloat(getEnvVar('PLATFORM_FEE_PERCENTAGE', '5.0')),
+  AUTO_RELEASE_HOURS: parseInt(getEnvVar('AUTO_RELEASE_HOURS', '48'), 10),
 };
 
 export default config;

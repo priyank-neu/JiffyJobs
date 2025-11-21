@@ -24,7 +24,10 @@ router.put('/:taskId', taskController.updateTask);
  
 // Cancel task
 router.patch('/:taskId/cancel', taskController.cancelTask);
- 
+
+// Complete task
+router.patch('/:taskId/complete', taskController.completeTask);
+
 // Delete task
 router.delete('/:taskId', taskController.deleteTask);
  

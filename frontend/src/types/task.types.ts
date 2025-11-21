@@ -166,6 +166,16 @@ export interface AcceptBidData {
   bidId: string;
 }
 
+// Payment status enum
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED',
+  PARTIALLY_REFUNDED = 'PARTIALLY_REFUNDED',
+}
+
 // Contract related interfaces
 export interface Contract {
   contractId: string;
@@ -180,6 +190,21 @@ export interface Contract {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  // Payment fields
+  paymentStatus?: PaymentStatus;
+  paymentIntentId?: string;
+  payoutId?: string;
+  platformFee?: number;
+  helperAmount?: number;
+  refundId?: string;
+  refundAmount?: number;
+  autoReleaseAt?: string;
+  paymentCompletedAt?: string;
+  payoutReleasedAt?: string;
+  paymentInfo?: {
+    paymentIntentId: string;
+    clientSecret: string;
+  };
   helper?: {
     userId: string;
     name?: string;

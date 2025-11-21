@@ -22,7 +22,8 @@ import {
   AccessTime,
 } from '@mui/icons-material';
 import { bidAPI } from '@/services/api.service';
-import { Bid, BidStatus, BidSortOptions } from '@/types/task.types';
+import { Bid, BidStatus, BidSortOptions, Contract } from '@/types/task.types';
+import PaymentConfirmation from '@/components/payments/PaymentConfirmation';
 
 interface BidListProps {
   taskId: string;
@@ -43,6 +44,8 @@ const BidList: React.FC<BidListProps> = ({
     field: 'amount',
     order: 'asc'
   });
+  const [paymentContract, setPaymentContract] = useState<Contract | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   const sortOptions = [
     { value: { field: 'amount' as const, order: 'asc' as const }, label: 'Amount (Low to High)' },
@@ -80,7 +83,15 @@ const BidList: React.FC<BidListProps> = ({
 
   const handleAcceptBid = async (bid: Bid) => {
     try {
-      await bidAPI.acceptBid(bid.bidId);
+      const response = await bidAPI.acceptBid(bid.bidId);
+      const contract = response.contract;
+      
+      // If payment info is present, show payment dialog
+      if (contract?.paymentInfo?.clientSecret) {
+        setPaymentContract(contract);
+        setShowPaymentDialog(true);
+      }
+      
       if (onBidAccepted) {
         onBidAccepted(bid);
       }
@@ -300,6 +311,26 @@ const BidList: React.FC<BidListProps> = ({
           </Card>
         ))}
       </Stack>
+
+      {/* Payment Confirmation Dialog */}
+      {paymentContract && paymentContract.paymentInfo && (
+        <PaymentConfirmation
+          open={showPaymentDialog}
+          onClose={() => {
+            setShowPaymentDialog(false);
+            setPaymentContract(null);
+          }}
+          contract={paymentContract}
+          onSuccess={() => {
+            setShowPaymentDialog(false);
+            setPaymentContract(null);
+            if (onBidAccepted) {
+              // Trigger refresh
+              fetchBids();
+            }
+          }}
+        />
+      )}
     </Box>
   );
 };

@@ -32,6 +32,10 @@ model User {
 
   updatedAt       DateTime        @updatedAt
 
+  // Stripe Connect fields
+  stripeAccountId String?         @unique
+  stripeOnboardingComplete Boolean @default(false)
+
   bids            Bid[]
 
   contracts       Contract[]      @relation("HelperContracts")
@@ -365,6 +369,18 @@ model Contract {
 
   isActive      Boolean   @default(true)
 
+  // Payment fields
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentIntentId String?      @unique
+  payoutId       String?       @unique
+  platformFee   Decimal?      @db.Decimal(10, 2)
+  helperAmount  Decimal?      @db.Decimal(10, 2)
+  refundId      String?       @unique
+  refundAmount  Decimal?      @db.Decimal(10, 2)
+  autoReleaseAt DateTime?
+  paymentCompletedAt DateTime?
+  payoutReleasedAt DateTime?
+
   createdAt     DateTime  @default(now())
 
   updatedAt     DateTime  @updatedAt
@@ -376,6 +392,8 @@ model Contract {
   poster        User      @relation("PosterContracts", fields: [posterId], references: [userId], onDelete: Cascade)
 
   task          Task      @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  payments      Payment[]
  
   @@index([taskId])
 
@@ -385,7 +403,45 @@ model Contract {
 
   @@index([isActive])
 
+  @@index([paymentStatus])
+
+  @@index([paymentIntentId])
+
   @@map("contracts")
+
+}
+
+model Payment {
+
+  paymentId     String    @id @default(uuid())
+
+  contractId    String
+
+  type          PaymentType
+
+  amount        Decimal   @db.Decimal(10, 2)
+
+  status        PaymentStatus
+
+  stripeId      String?   @unique
+
+  receiptUrl    String?
+
+  metadata      String?   // JSON string for additional data
+
+  createdAt     DateTime  @default(now())
+
+  updatedAt     DateTime  @updatedAt
+
+  contract      Contract  @relation(fields: [contractId], references: [contractId], onDelete: Cascade)
+
+  @@index([contractId])
+
+  @@index([stripeId])
+
+  @@index([status])
+
+  @@map("payments")
 
 }
  
@@ -485,6 +541,21 @@ enum BidStatus {
 
   WITHDRAWN
 
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentType {
+  CHARGE
+  PAYOUT
+  REFUND
 }
 
 enum TimelineEventType {
@@ -656,18 +727,11 @@ model MessageReport {
 }
 
 enum NotificationType {
-
   NEW_MESSAGE
-
   BID_ACCEPTED
-
   HELPER_ASSIGNED
-
   TASK_UPDATED
-
   CONTRACT_CREATED
-
   OTHER
-
 }
  

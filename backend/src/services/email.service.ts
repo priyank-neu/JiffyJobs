@@ -121,3 +121,105 @@ export const sendNotificationEmail = async (
     }
   }
 };
+
+export const sendPaymentConfirmation = async (
+  email: string,
+  data: { contractId: string; amount: number; taskTitle: string }
+): Promise<void> => {
+  const contractUrl = `${config.FRONTEND_URL}/contracts/${data.contractId}`;
+
+  try {
+    await resend.emails.send({
+      from: `${config.EMAIL_FROM_NAME} <${config.EMAIL_FROM}>`,
+      to: email,
+      subject: 'Payment Confirmed - JiffyJobs',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Payment Confirmed</h2>
+          <p>Your payment of $${data.amount.toFixed(2)} has been successfully processed.</p>
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 6px; margin: 20px 0;">
+            <p><strong>Task:</strong> ${data.taskTitle}</p>
+            <p><strong>Amount:</strong> $${data.amount.toFixed(2)}</p>
+            <p><strong>Contract ID:</strong> ${data.contractId}</p>
+          </div>
+          <p>Funds are now held in escrow and will be released to the helper upon task completion.</p>
+          <a href="${contractUrl}" 
+             style="display: inline-block; padding: 12px 24px; background-color: #0ea5e9; 
+                    color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+            View Contract
+          </a>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error('Error sending payment confirmation email:', error);
+  }
+};
+
+export const sendPayoutNotification = async (
+  email: string,
+  data: { contractId: string; amount: number; taskTitle: string }
+): Promise<void> => {
+  const contractUrl = `${config.FRONTEND_URL}/contracts/${data.contractId}`;
+
+  try {
+    await resend.emails.send({
+      from: `${config.EMAIL_FROM_NAME} <${config.EMAIL_FROM}>`,
+      to: email,
+      subject: 'Payout Released - JiffyJobs',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Payout Released</h2>
+          <p>Your payout of $${data.amount.toFixed(2)} has been successfully transferred to your account.</p>
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 6px; margin: 20px 0;">
+            <p><strong>Task:</strong> ${data.taskTitle}</p>
+            <p><strong>Amount:</strong> $${data.amount.toFixed(2)}</p>
+            <p><strong>Contract ID:</strong> ${data.contractId}</p>
+          </div>
+          <p>Funds should appear in your connected account within 1-2 business days.</p>
+          <a href="${contractUrl}" 
+             style="display: inline-block; padding: 12px 24px; background-color: #0ea5e9; 
+                    color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+            View Contract
+          </a>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error('Error sending payout notification email:', error);
+  }
+};
+
+export const sendRefundNotification = async (
+  email: string,
+  data: { contractId: string; amount: number; taskTitle: string; isPartial: boolean }
+): Promise<void> => {
+  const contractUrl = `${config.FRONTEND_URL}/contracts/${data.contractId}`;
+
+  try {
+    await resend.emails.send({
+      from: `${config.EMAIL_FROM_NAME} <${config.EMAIL_FROM}>`,
+      to: email,
+      subject: `${data.isPartial ? 'Partial ' : ''}Refund Processed - JiffyJobs`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Refund Processed</h2>
+          <p>A ${data.isPartial ? 'partial ' : ''}refund of $${data.amount.toFixed(2)} has been processed for the following contract:</p>
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 6px; margin: 20px 0;">
+            <p><strong>Task:</strong> ${data.taskTitle}</p>
+            <p><strong>Refund Amount:</strong> $${data.amount.toFixed(2)}</p>
+            <p><strong>Contract ID:</strong> ${data.contractId}</p>
+          </div>
+          <p>The refund will appear in your account within 5-10 business days.</p>
+          <a href="${contractUrl}" 
+             style="display: inline-block; padding: 12px 24px; background-color: #0ea5e9; 
+                    color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+            View Contract
+          </a>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error('Error sending refund notification email:', error);
+  }
+};

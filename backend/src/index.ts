@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import config from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
+import { startAutoReleaseScheduler } from './services/autoRelease.service';
 import { initializeSocketIO } from './config/socket';
 import { initializeSocketService } from './services/socket.service';
 
@@ -46,4 +47,7 @@ httpServer.listen(PORT, () => {
   console.log(`📝 Environment: ${config.NODE_ENV}`);
   console.log(`🌐 API URL: ${config.API_URL}`);
   console.log(`🔌 Socket.IO enabled`);
+  
+  // Start auto-release scheduler
+  startAutoReleaseScheduler();
 });

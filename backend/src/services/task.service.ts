@@ -272,6 +272,111 @@ export const deleteTask = async (taskId: string, posterId: string) => {
   await prisma.task.delete({
     where: { taskId },
   });
- 
+
   return { message: 'Task deleted successfully' };
+};
+
+// Complete task and release payout
+export const completeTask = async (taskId: string, userId: string, autoRelease: boolean = false) => {
+  const task = await prisma.task.findUnique({
+    where: { taskId },
+    include: {
+      contract: true,
+    },
+  });
+
+  if (!task) {
+    throw new Error('Task not found');
+  }
+
+  // Check permissions - poster can confirm completion, helper can mark as done
+  const isPoster = task.posterId === userId;
+  const isHelper = task.assignedHelperId === userId;
+
+  if (!isPoster && !isHelper) {
+    throw new Error('You do not have permission to complete this task');
+  }
+
+  // If helper marks as done, set status to AWAITING_CONFIRMATION
+  // If poster confirms, mark as COMPLETED and release payout
+  if (isHelper && !autoRelease) {
+    // Helper marks task as done - wait for poster confirmation
+    const updatedTask = await prisma.task.update({
+      where: { taskId },
+      data: {
+        status: TaskStatus.AWAITING_CONFIRMATION,
+      },
+      include: {
+        poster: {
+          select: {
+            userId: true,
+            name: true,
+          },
+        },
+        location: true,
+        photos: true,
+      },
+    });
+
+    // Set auto-release time if contract exists and not already set
+    if (task.contract && !task.contract.autoReleaseAt) {
+      const config = require('../config/env').default;
+      await prisma.contract.update({
+        where: { contractId: task.contract.contractId },
+        data: {
+          autoReleaseAt: new Date(Date.now() + config.AUTO_RELEASE_HOURS * 60 * 60 * 1000),
+        },
+      });
+    }
+
+    return updatedTask;
+  } else if (isPoster || autoRelease) {
+    // Poster confirms or auto-release - mark as COMPLETED and release payout
+    // Check if task has a contract for payout
+    if (!task.contract) {
+      throw new Error('Task does not have an active contract. Cannot release payout.');
+    }
+
+    const { releasePayout } = await import('./payment.service');
+    
+    await prisma.$transaction(async (tx) => {
+      // Update task status
+      await tx.task.update({
+        where: { taskId },
+        data: {
+          status: TaskStatus.COMPLETED,
+        },
+      });
+    });
+
+    // Release payout (outside transaction to avoid long locks)
+    try {
+      await releasePayout(task.contract.contractId);
+    } catch (error) {
+      console.error('Error releasing payout:', error);
+      // Don't fail if payout fails - it can be retried
+    }
+
+    const updatedTask = await prisma.task.findUnique({
+      where: { taskId },
+      include: {
+        poster: {
+          select: {
+            userId: true,
+            name: true,
+          },
+        },
+        location: true,
+        photos: true,
+      },
+    });
+
+    if (!updatedTask) {
+      throw new Error('Task not found after update');
+    }
+
+    return updatedTask;
+  }
+
+  throw new Error('Invalid completion request');
 };

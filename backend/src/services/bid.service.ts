@@ -12,6 +12,7 @@ import {
   BidFilter,
   BidSortOptions
 } from '../types';
+import * as paymentService from './payment.service';
 
 // Place a new bid on a task
 export const placeBid = async (helperId: string, bidData: CreateBidRequest): Promise<Bid> => {
@@ -142,7 +143,7 @@ export const withdrawBid = async (helperId: string, withdrawData: WithdrawBidReq
 export const acceptBid = async (posterId: string, acceptData: AcceptBidRequest): Promise<Contract> => {
   const { bidId } = acceptData;
 
-  return await prisma.$transaction(async (tx) => {
+  const contractId = await prisma.$transaction(async (tx): Promise<string> => {
     // Get the bid with task information
     const bid = await tx.bid.findUnique({
       where: { bidId },
@@ -211,6 +212,12 @@ export const acceptBid = async (posterId: string, acceptData: AcceptBidRequest):
       }
     });
 
+    // Get poster info for payment
+    const poster = await tx.user.findUnique({
+      where: { userId: bid.task.posterId },
+      select: { email: true }
+    });
+
     // Create contract
     const contract = await tx.contract.create({
       data: {
@@ -266,29 +273,102 @@ export const acceptBid = async (posterId: string, acceptData: AcceptBidRequest):
       console.error('Error creating notifications for bid acceptance:', error);
     }
 
-    // Convert Decimal to number and null to undefined for response
-    return {
-      ...contract,
-      agreedAmount: Number(contract.agreedAmount),
-      startDate: contract.startDate ?? undefined,
-      endDate: contract.endDate ?? undefined,
-      terms: contract.terms ?? undefined,
-      helper: contract.helper ? {
-        ...contract.helper,
-        name: contract.helper.name ?? undefined
-      } : undefined,
-      poster: contract.poster ? {
-        ...contract.poster,
-        name: contract.poster.name ?? undefined
-      } : undefined,
-      acceptedBid: contract.acceptedBid ? {
-        ...contract.acceptedBid,
-        amount: Number(contract.acceptedBid.amount),
-        note: contract.acceptedBid.note ?? undefined,
-        status: contract.acceptedBid.status as BidStatus
-      } : undefined
-    };
+    // Return contract ID - we'll fetch full contract after transaction
+    return contract.contractId;
   });
+
+  // After transaction commits, fetch the full contract and create payment intent
+  const contract = await prisma.contract.findUnique({
+    where: { contractId },
+    include: {
+      helper: {
+        select: {
+          userId: true,
+          name: true,
+          email: true
+        }
+      },
+      poster: {
+        select: {
+          userId: true,
+          name: true,
+          email: true
+        }
+      },
+      acceptedBid: true
+    }
+  });
+
+  if (!contract) {
+    throw new Error('Contract not found after creation');
+  }
+
+  let paymentInfo: { paymentIntentId: string; clientSecret: string } | null = null;
+  
+  // Get task title and poster email for payment
+  const task = await prisma.task.findUnique({
+    where: { taskId: contract.taskId },
+    select: { title: true }
+  });
+  
+  const poster = await prisma.user.findUnique({
+    where: { userId: contract.posterId },
+    select: { email: true }
+  });
+
+  if (poster) {
+    try {
+      paymentInfo = await paymentService.chargePoster(
+        contract.contractId,
+        Number(contract.agreedAmount),
+        poster.email,
+        `Payment for task: ${task?.title || 'Task'}`
+      );
+    } catch (paymentError) {
+      // If payment creation fails, we need to handle it
+      // For now, log the error but don't fail the bid acceptance
+      // The contract is already created, payment can be retried
+      console.error('Payment creation failed after contract creation:', paymentError);
+      // Optionally, you could mark the contract as payment_failed or delete it
+    }
+  }
+
+  // Convert Decimal to number and null to undefined for response
+  const contractResponse = {
+    ...contract,
+    agreedAmount: Number(contract.agreedAmount),
+    startDate: contract.startDate ?? undefined,
+    endDate: contract.endDate ?? undefined,
+    terms: contract.terms ?? undefined,
+    helper: contract.helper ? {
+      ...contract.helper,
+      name: contract.helper.name ?? undefined
+    } : undefined,
+    poster: contract.poster ? {
+      ...contract.poster,
+      name: contract.poster.name ?? undefined
+    } : undefined,
+    acceptedBid: contract.acceptedBid ? {
+      ...contract.acceptedBid,
+      amount: Number(contract.acceptedBid.amount),
+      note: contract.acceptedBid.note ?? undefined,
+      status: contract.acceptedBid.status as BidStatus
+    } : undefined
+  };
+
+  // Add payment info if available
+  const result: Contract & { paymentInfo?: { paymentIntentId: string; clientSecret: string } } = {
+    ...contractResponse,
+  };
+
+  if (paymentInfo !== null) {
+    result.paymentInfo = {
+      paymentIntentId: paymentInfo!.paymentIntentId,
+      clientSecret: paymentInfo!.clientSecret,
+    };
+  }
+
+  return result;
 };
 
 // Get bids for a task with proper visibility rules
