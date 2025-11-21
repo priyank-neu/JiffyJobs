@@ -40,27 +40,7 @@ jobs:
         working-directory: ./backend
         run: npm run build
 
-      - name: Deploy to Railway (Production)
-        if: github.ref == 'refs/heads/main'
-        uses: bervProject/railway-deploy@v1.0.0
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          service: backend
-          # Uncomment and configure when Railway project is set up
-          # railway_project_id: ${{ secrets.RAILWAY_PROJECT_ID }}
-        continue-on-error: true
-
-      - name: Deploy to Railway (Staging)
-        if: github.ref == 'refs/heads/development'
-        uses: bervProject/railway-deploy@v1.0.0
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN_STAGING }}
-          service: backend
-          # Uncomment and configure when Railway project is set up
-          # railway_project_id: ${{ secrets.RAILWAY_PROJECT_ID_STAGING }}
-        continue-on-error: true
-
-      # Alternative: Deploy to Render
+      # Deploy to Render (Primary deployment platform)
       - name: Deploy to Render (Production)
         if: github.ref == 'refs/heads/main'
         uses: johnbeynon/render-deploy-action@v0.0.8
@@ -69,23 +49,14 @@ jobs:
           api-key: ${{ secrets.RENDER_API_KEY }}
         continue-on-error: true
 
-      # Alternative: Deploy to Heroku
-      - name: Deploy to Heroku (Production)
-        if: github.ref == 'refs/heads/main'
-        uses: akhileshns/heroku-deploy@v3.13.15
+      - name: Deploy to Render (Staging)
+        if: github.ref == 'refs/heads/development'
+        uses: johnbeynon/render-deploy-action@v0.0.8
         with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          appdir: "backend"
+          service-id: ${{ secrets.RENDER_SERVICE_ID_STAGING || secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
         continue-on-error: true
 
-      - name: Run Database Migrations (Production)
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "⚠️  Database migrations should be run manually or via your deployment platform"
-          echo "For Railway: Use Railway CLI or dashboard"
-          echo "For Render: Configure in Render dashboard"
-          echo "For Heroku: Use 'heroku run npm run prisma:migrate deploy'"
-        continue-on-error: true
+      # Note: Database migrations are handled by Render's build command
+      # Build command should include: npm ci && npm run build && npx prisma migrate deploy
 
