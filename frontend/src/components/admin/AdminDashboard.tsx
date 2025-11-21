@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   Stack,
   Chip,
   CircularProgress,
@@ -95,73 +94,65 @@ const AdminDashboard: React.FC = () => {
 
       {/* Metrics Cards */}
       {metrics && (
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Warning color="error" />
-                  <Box>
-                    <Typography variant="h4">{metrics.total.OPEN}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Open Reports
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3, mb: 3 }}>
+          <Card>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Warning color="error" />
+                <Box>
+                  <Typography variant="h4">{metrics.total.OPEN}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Open Reports
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <CheckCircle color="success" />
-                  <Box>
-                    <Typography variant="h4">{metrics.total.RESOLVED}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Resolved Reports
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <CheckCircle color="success" />
+                <Box>
+                  <Typography variant="h4">{metrics.total.RESOLVED}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Resolved Reports
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Cancel sx={{ color: 'text.secondary' }} />
-                  <Box>
-                    <Typography variant="h4">{metrics.total.CLOSED}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Closed Reports
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Cancel sx={{ color: 'text.secondary' }} />
+                <Box>
+                  <Typography variant="h4">{metrics.total.CLOSED}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Closed Reports
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Report color="primary" />
-                  <Box>
-                    <Typography variant="h4">
-                      {metrics.total.OPEN + metrics.total.RESOLVED + metrics.total.CLOSED}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Reports
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+          <Card>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Report color="primary" />
+                <Box>
+                  <Typography variant="h4">
+                    {metrics.total.OPEN + metrics.total.RESOLVED + metrics.total.CLOSED}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Total Reports
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Box>
       )}
 
       {/* Breakdown by Type */}
@@ -171,34 +162,32 @@ const AdminDashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Reports by Type
             </Typography>
-            <Grid container spacing={2}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2 }}>
               {Object.entries(metrics.byType).map(([type, counts]) => (
-                <Grid item xs={12} sm={6} md={3} key={type}>
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      {type}
-                    </Typography>
-                    <Stack direction="row" spacing={1}>
-                      <Chip
-                        label={`Open: ${counts.OPEN}`}
-                        color="error"
-                        size="small"
-                      />
-                      <Chip
-                        label={`Resolved: ${counts.RESOLVED}`}
-                        color="success"
-                        size="small"
-                      />
-                      <Chip
-                        label={`Closed: ${counts.CLOSED}`}
-                        color="default"
-                        size="small"
-                      />
-                    </Stack>
-                  </Box>
-                </Grid>
+                <Box key={type}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    {type}
+                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    <Chip
+                      label={`Open: ${counts.OPEN}`}
+                      color="error"
+                      size="small"
+                    />
+                    <Chip
+                      label={`Resolved: ${counts.RESOLVED}`}
+                      color="success"
+                      size="small"
+                    />
+                    <Chip
+                      label={`Closed: ${counts.CLOSED}`}
+                      color="default"
+                      size="small"
+                    />
+                  </Stack>
+                </Box>
               ))}
-            </Grid>
+            </Box>
           </CardContent>
         </Card>
       )}
