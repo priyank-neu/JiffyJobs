@@ -339,7 +339,7 @@ export const completeTask = async (taskId: string, userId: string, autoRelease: 
 
     const { releasePayout } = await import('./payment.service');
     
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Update task status
       await tx.task.update({
         where: { taskId },

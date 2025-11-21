@@ -46,7 +46,7 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
   const [longitude, setLongitude] = useState<number | null>(null);
 
   // Verification
-  const [verificationMethod, setVerificationMethod] = useState<'geo' | 'otp' | null>(null);
+  // const [verificationMethod, setVerificationMethod] = useState<'geo' | 'otp' | null>(null); // Unused for now
   const [otpDialogOpen, setOtpDialogOpen] = useState(false);
   const [otpToken, setOtpToken] = useState<string | null>(null);
   const [otp, setOtp] = useState('');
@@ -80,7 +80,7 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
         // Reverse geocode to get address (simplified - in production use a geocoding service)
         setAddress(`${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`);
       },
-      (err) => {
+      () => {
         setError('Failed to get your location. Please enter it manually.');
         setLoading(false);
       }
@@ -109,8 +109,8 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
         setSuccess(false);
         onUpdate();
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to set neighborhood');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Failed to set neighborhood');
     } finally {
       setLoading(false);
     }
@@ -137,8 +137,8 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
             setSuccess(false);
             onUpdate();
           }, 2000);
-        } catch (err: any) {
-          setError(err.response?.data?.error || 'Failed to verify location');
+        } catch (error: any) {
+          setError(error.response?.data?.error || 'Failed to verify location');
         } finally {
           setLoading(false);
         }
@@ -158,8 +158,8 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
       setOtpToken(response.token);
       setOtpFromResponse(response.otp || null); // For testing only
       setOtpDialogOpen(true);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to generate OTP');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Failed to generate OTP');
     } finally {
       setLoading(false);
     }
@@ -183,8 +183,8 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
         setSuccess(false);
         onUpdate();
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Invalid OTP');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Invalid OTP');
     } finally {
       setLoading(false);
     }

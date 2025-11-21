@@ -625,9 +625,14 @@ export const getReportMetrics = async () => {
 
   allReports.forEach((report: any) => {
     const status = report.status as ReportStatus;
-    metrics.total[status] += report._count;
-    if (report.type) {
-      metrics.byType[report.type as keyof typeof metrics.byType][status] += report._count;
+    if (status === 'OPEN' || status === 'RESOLVED' || status === 'CLOSED') {
+      metrics.total[status] += report._count || 0;
+      if (report.type && report.type in metrics.byType) {
+        const typeKey = report.type as keyof typeof metrics.byType;
+        if (status === 'OPEN' || status === 'RESOLVED' || status === 'CLOSED') {
+          metrics.byType[typeKey][status] += report._count || 0;
+        }
+      }
     }
   });
 

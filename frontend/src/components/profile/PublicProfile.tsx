@@ -17,14 +17,12 @@ import {
 import {
   Verified,
   LocationOn,
-  Star,
-  Work,
 } from '@mui/icons-material';
 import { profileAPI } from '@/services/api.service';
 import { PublicProfile as PublicProfileType } from '@/types/profile.types';
 
 interface PublicProfileProps {
-  userId: string;
+  userId?: string;
 }
 
 const PublicProfile: React.FC<PublicProfileProps> = ({ userId: propUserId }) => {
@@ -42,13 +40,14 @@ const PublicProfile: React.FC<PublicProfileProps> = ({ userId: propUserId }) => 
   }, [userId]);
 
   const fetchProfile = async () => {
+    if (!userId) return;
     try {
       setLoading(true);
       setError(null);
       const response = await profileAPI.getPublicProfile(userId);
       setProfile(response.profile);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load profile');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Failed to load profile');
     } finally {
       setLoading(false);
     }

@@ -149,7 +149,7 @@ export const discoverTasks = async (
 
   // Calculate distances and filter by radius
   const tasksWithDistance = tasks
-    .map(task => {
+    .map((task: any) => {
       if (!(task as any).location) return null;
       
       const distance = calculateDistance(
@@ -164,11 +164,11 @@ export const discoverTasks = async (
         distance: distance * 0.621371, // Convert km to miles
       };
     })
-    .filter((task): task is NonNullable<typeof task> => task !== null && task.distance <= radius);
+    .filter((task: any): task is NonNullable<typeof task> => task !== null && task.distance <= radius);
 
   // Add skill matching for each task
   const tasksWithSkillMatch = await Promise.all(
-    tasksWithDistance.map(async (task) => {
+    tasksWithDistance.map(async (task: any) => {
       try {
         const skillMatch = await calculateSkillMatch(userId, task.taskId);
         return {

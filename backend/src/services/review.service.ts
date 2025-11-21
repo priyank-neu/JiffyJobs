@@ -387,7 +387,7 @@ export const getUserReviewStats = async (userId: string) => {
   }
 
   // Calculate average rating
-  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const totalRating = reviews.reduce((sum: number, r: any) => sum + r.rating, 0);
   const averageRating = totalRating / reviews.length;
 
   // Count tag occurrences
