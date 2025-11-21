@@ -52,6 +52,8 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
           working-directory: ./frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL_PROD }}
         continue-on-error: true
 
       - name: Deploy to Vercel (Staging/Preview)
@@ -62,5 +64,7 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_STAGING || secrets.VERCEL_PROJECT_ID }}
           working-directory: ./frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL_STAGING }}
         continue-on-error: true
 
