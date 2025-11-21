@@ -14,8 +14,40 @@ const app: Application = express();
 
 // Middleware
 app.use(helmet());
+
+// CORS configuration - allow Vercel preview URLs and production
+const allowedOrigins = [
+  config.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  // Allow all Vercel preview and production URLs
+  /^https:\/\/.*\.vercel\.app$/,
+];
+
 app.use(cors({
-  origin: config.FRONTEND_URL,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return origin === allowedOrigin;
+      }
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
