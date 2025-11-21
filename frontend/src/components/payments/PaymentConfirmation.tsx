@@ -18,7 +18,7 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-import { paymentAPI } from '@/services/api.service';
+// paymentAPI imported dynamically when needed
 
 // Get publishable key from environment
 const getStripePublishableKey = () => {
@@ -30,9 +30,19 @@ interface PaymentConfirmationProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  clientSecret: string;
-  amount: number;
-  taskTitle: string;
+  contract?: {
+    paymentInfo?: {
+      clientSecret: string;
+      paymentIntentId: string;
+    };
+    agreedAmount: number | string;
+    task?: {
+      title: string;
+    };
+  };
+  clientSecret?: string;
+  amount?: number;
+  taskTitle?: string;
 }
 
 const PaymentForm: React.FC<{
@@ -132,10 +142,15 @@ const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({
   open,
   onClose,
   onSuccess,
-  clientSecret,
-  amount,
-  taskTitle,
+  contract,
+  clientSecret: propClientSecret,
+  amount: propAmount,
+  taskTitle: propTaskTitle,
 }) => {
+  // Support both old API (direct props) and new API (contract object)
+  const clientSecret = contract?.paymentInfo?.clientSecret || propClientSecret || '';
+  const amount = contract ? Number(contract.agreedAmount) : (propAmount || 0);
+  const taskTitle = contract?.task?.title || propTaskTitle || 'Task';
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null);
   const [loadingKey, setLoadingKey] = useState(true);
 
