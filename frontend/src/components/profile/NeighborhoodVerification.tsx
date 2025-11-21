@@ -128,7 +128,7 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          const result = await profileAPI.verifyNeighborhoodByGeo(
+          await profileAPI.verifyNeighborhoodByGeo(
             position.coords.latitude,
             position.coords.longitude
           );
@@ -154,9 +154,9 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const result = await profileAPI.generateNeighborhoodOTP();
-      setOtpToken(result.token);
-      setOtpFromResponse(result.otp || null); // For testing only
+      const response = await profileAPI.generateNeighborhoodOTP();
+      setOtpToken(response.token);
+      setOtpFromResponse(response.otp || null); // For testing only
       setOtpDialogOpen(true);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to generate OTP');

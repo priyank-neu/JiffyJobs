@@ -11,7 +11,6 @@ import {
   Alert,
   CircularProgress,
   InputAdornment,
-  Chip,
 } from '@mui/material';
 import {
   PhotoCamera,
@@ -22,7 +21,6 @@ import { profileAPI, uploadAPI } from '@/services/api.service';
 import { UserProfile, UpdateProfileData } from '@/types/profile.types';
 
 const ProfileEdit: React.FC = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +31,6 @@ const ProfileEdit: React.FC = () => {
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [preferredHourlyRate, setPreferredHourlyRate] = useState<string>('');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,7 +43,6 @@ const ProfileEdit: React.FC = () => {
       setError(null);
       const response = await profileAPI.getMyProfile();
       const profileData = response.profile;
-      setProfile(profileData);
       setName(profileData.name || '');
       setBio(profileData.bio || '');
       setAvatarUrl(profileData.avatarUrl);
@@ -76,7 +72,6 @@ const ProfileEdit: React.FC = () => {
       return;
     }
 
-    setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
 
     try {
@@ -111,7 +106,6 @@ const ProfileEdit: React.FC = () => {
   };
 
   const handleRemoveAvatar = () => {
-    setAvatarFile(null);
     setAvatarPreview(null);
     setAvatarUrl(null);
   };

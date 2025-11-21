@@ -143,7 +143,7 @@ export const withdrawBid = async (helperId: string, withdrawData: WithdrawBidReq
 export const acceptBid = async (posterId: string, acceptData: AcceptBidRequest): Promise<Contract> => {
   const { bidId } = acceptData;
 
-  const contractId = await prisma.$transaction(async (tx): Promise<string> => {
+  const contractId = await prisma.$transaction(async (tx: any): Promise<string> => {
     // Get the bid with task information
     const bid = await tx.bid.findUnique({
       where: { bidId },
@@ -435,7 +435,7 @@ export const getTaskBids = async (
   });
 
   // Convert Decimal to number and null to undefined for response
-  return bids.map(bid => ({
+  return bids.map((bid: any) => ({
     ...bid,
     amount: Number(bid.amount),
     note: bid.note ?? undefined,
@@ -510,7 +510,7 @@ export const getHelperBids = async (
   });
 
   // Convert Decimal to number and null to undefined for response
-  return bids.map(bid => ({
+  return bids.map((bid: any) => ({
     ...bid,
     amount: Number(bid.amount),
     note: bid.note ?? undefined,

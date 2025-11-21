@@ -81,7 +81,7 @@ export const getAuditLogs = async (params: {
   ]);
 
   return {
-    logs: logs.map((log) => ({
+    logs: logs.map((log: any) => ({
       ...log,
       details: log.details ? JSON.parse(log.details) : null,
     })),

@@ -341,7 +341,7 @@ export const getUserReviews = async (
   const totalPages = Math.ceil(total / limit);
 
   return {
-    reviews: reviews.map((r) => ({
+    reviews: reviews.map((r: any) => ({
       reviewId: r.reviewId,
       rating: r.rating,
       comment: r.comment,
@@ -392,8 +392,8 @@ export const getUserReviewStats = async (userId: string) => {
 
   // Count tag occurrences
   const tagCounts = new Map<ReviewTag, number>();
-  reviews.forEach((review) => {
-    review.tags.forEach((tag) => {
+  reviews.forEach((review: any) => {
+    review.tags.forEach((tag: any) => {
       tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
     });
   });

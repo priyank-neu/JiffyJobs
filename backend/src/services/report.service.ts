@@ -265,7 +265,7 @@ export const getReports = async (params: {
     });
 
     allReports.push(
-      ...taskReports.map((r) => ({
+      ...taskReports.map((r: any) => ({
         ...r,
         type: 'TASK' as const,
         targetId: r.taskId,
@@ -305,7 +305,7 @@ export const getReports = async (params: {
     });
 
     allReports.push(
-      ...userReports.map((r) => ({
+      ...userReports.map((r: any) => ({
         ...r,
         type: 'USER' as const,
         targetId: r.reportedUserId,
@@ -344,7 +344,7 @@ export const getReports = async (params: {
     });
 
     allReports.push(
-      ...messageReports.map((r) => ({
+      ...messageReports.map((r: any) => ({
         ...r,
         type: 'MESSAGE' as const,
         targetId: r.messageId,
@@ -384,7 +384,7 @@ export const getReports = async (params: {
     });
 
     allReports.push(
-      ...reviewReports.map((r) => ({
+      ...reviewReports.map((r: any) => ({
         ...r,
         type: 'REVIEW' as const,
         targetId: r.reviewId,
@@ -603,10 +603,10 @@ export const getReportMetrics = async () => {
   ]);
 
   const allReports = [
-    ...taskReports.map((r) => ({ ...r, type: 'TASK' })),
-    ...userReports.map((r) => ({ ...r, type: 'USER' })),
-    ...messageReports.map((r) => ({ ...r, type: 'MESSAGE' })),
-    ...reviewReports.map((r) => ({ ...r, type: 'REVIEW' })),
+    ...taskReports.map((r: any) => ({ ...r, type: 'TASK' })),
+    ...userReports.map((r: any) => ({ ...r, type: 'USER' })),
+    ...messageReports.map((r: any) => ({ ...r, type: 'MESSAGE' })),
+    ...reviewReports.map((r: any) => ({ ...r, type: 'REVIEW' })),
   ];
 
   const metrics = {
@@ -623,7 +623,7 @@ export const getReportMetrics = async () => {
     },
   };
 
-  allReports.forEach((report) => {
+  allReports.forEach((report: any) => {
     const status = report.status as ReportStatus;
     metrics.total[status] += report._count;
     if (report.type) {
