@@ -13,7 +13,6 @@ import {
 import {
   AccountBalance,
   CheckCircle,
-  Error as ErrorIcon,
   Launch,
 } from '@mui/icons-material';
 import { paymentAPI } from '@/services/api.service';

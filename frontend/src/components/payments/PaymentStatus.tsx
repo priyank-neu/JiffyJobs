@@ -14,7 +14,6 @@ import {
 import {
   CheckCircle,
   Payment,
-  Receipt,
   Error as ErrorIcon,
   Refresh,
 } from '@mui/icons-material';
