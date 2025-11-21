@@ -108,6 +108,10 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/profile/:userId"
+                element={<PublicProfile />}
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Layout>
