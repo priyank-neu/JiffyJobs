@@ -16,35 +16,50 @@ export const calculateAmounts = (agreedAmount: number): { platformFee: number; h
   return { platformFee, helperAmount };
 };
 
-// Create Stripe Connect account for helper
+// Create Stripe Connect account for helper (Marketplace model)
 export const createConnectAccount = async (userId: string, email: string, returnUrl: string): Promise<{ accountId: string; onboardingUrl: string }> => {
-  const account = await stripe.accounts.create({
-    type: 'express',
-    country: 'US',
-    email,
-    capabilities: {
-      transfers: { requested: true },
-    },
-  });
+  try {
+    // Create Express account for marketplace model
+    // Platform collects payments, then transfers to connected accounts
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: 'US',
+      email,
+      capabilities: {
+        transfers: { requested: true }, // Required for receiving transfers in marketplace model
+      },
+    });
 
-  // Store account ID in user record
-  await prisma.user.update({
-    where: { userId },
-    data: { stripeAccountId: account.id },
-  });
+    // Store account ID in user record
+    await prisma.user.update({
+      where: { userId },
+      data: { stripeAccountId: account.id },
+    });
 
-  // Create onboarding link
-  const accountLink = await stripe.accountLinks.create({
-    account: account.id,
-    refresh_url: returnUrl,
-    return_url: returnUrl,
-    type: 'account_onboarding',
-  });
+    // Create onboarding link
+    const accountLink = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: returnUrl,
+      return_url: returnUrl,
+      type: 'account_onboarding',
+    });
 
-  return {
-    accountId: account.id,
-    onboardingUrl: accountLink.url,
-  };
+    return {
+      accountId: account.id,
+      onboardingUrl: accountLink.url,
+    };
+  } catch (error: any) {
+    // Handle specific Stripe Connect errors
+    if (error?.code === 'account_invalid' || error?.message?.includes('Connect')) {
+      throw new Error(
+        'Stripe Connect is not enabled on your account. ' +
+        'To enable it for testing: 1) Go to https://dashboard.stripe.com/test/settings/connect ' +
+        '2) Click "Get started" or "Enable Connect" 3) Follow the setup wizard. ' +
+        'This is free in test mode and required for payouts to work.'
+      );
+    }
+    throw error;
+  }
 };
 
 // Get Connect account status
@@ -178,7 +193,8 @@ export const releasePayout = async (contractId: string): Promise<void> => {
 
   const { helperAmount, platformFee } = calculateAmounts(Number(contract.agreedAmount));
 
-  // Create transfer to helper's Stripe Connect account
+  // Create transfer to helper's Stripe Connect account (Marketplace model)
+  // Platform account transfers funds to connected account, keeping the platform fee
   const transfer = await stripe.transfers.create({
     amount: Math.round(helperAmount * 100), // Convert to cents
     currency: 'usd',
@@ -186,6 +202,12 @@ export const releasePayout = async (contractId: string): Promise<void> => {
     metadata: {
       contractId,
       type: 'payout',
+      platformFee: platformFee.toString(),
+      originalAmount: contract.agreedAmount.toString(),
+    },
+    // Optional: Add transfer group if you need to track multiple related transfers
+    transfer_data: {
+      amount: Math.round(helperAmount * 100),
     },
   });
 

@@ -74,7 +74,19 @@ const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = ({
         window.open(response.onboardingUrl, '_blank');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create Stripe Connect account');
+      const errorMessage = err.response?.data?.error || 'Failed to create Stripe Connect account';
+      const helpUrl = err.response?.data?.helpUrl;
+      const instructions = err.response?.data?.instructions;
+      
+      let fullError = errorMessage;
+      if (instructions) {
+        fullError += `\n\n${instructions}`;
+      }
+      if (helpUrl) {
+        fullError += `\n\nVisit: ${helpUrl}`;
+      }
+      
+      setError(fullError);
       console.error('Error creating account:', err);
     } finally {
       setLoading(false);
@@ -119,8 +131,25 @@ const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = ({
           </Box>
 
           {error && (
-            <Alert severity="error" onClose={() => setError(null)}>
+            <Alert 
+              severity="error" 
+              onClose={() => setError(null)}
+              sx={{ whiteSpace: 'pre-line' }}
+            >
               {error}
+              {error.includes('dashboard.stripe.com') && (
+                <Box sx={{ mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Launch />}
+                    href="https://dashboard.stripe.com/test/settings/connect"
+                    target="_blank"
+                  >
+                    Open Stripe Dashboard
+                  </Button>
+                </Box>
+              )}
             </Alert>
           )}
 

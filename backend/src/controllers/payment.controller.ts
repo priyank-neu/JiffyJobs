@@ -52,9 +52,19 @@ export const createConnectAccount = async (req: AuthRequest, res: Response): Pro
       accountId,
       onboardingUrl,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error creating Connect account:', error);
     if (error instanceof Error) {
-      res.status(400).json({ error: error.message });
+      // Provide more helpful error messages
+      if (error.message.includes('Connect')) {
+        res.status(400).json({ 
+          error: error.message,
+          helpUrl: 'https://dashboard.stripe.com/test/settings/connect',
+          instructions: 'Please enable Stripe Connect in your dashboard to continue. This is free in test mode.'
+        });
+      } else {
+        res.status(400).json({ error: error.message });
+      }
     } else {
       res.status(500).json({ error: 'Internal server error' });
     }

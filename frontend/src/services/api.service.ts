@@ -126,7 +126,7 @@ export const taskAPI = {
   },
 
   completeTask: async (taskId: string, autoRelease?: boolean): Promise<{ message: string; task: Task }> => {
-    const response = await api.patch(`/tasks/${taskId}/complete`, null, {
+    const response = await api.patch(`/tasks/${taskId}/complete`, {}, {
       params: autoRelease ? { autoRelease: 'true' } : {},
     });
     return response.data;

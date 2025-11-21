@@ -148,15 +148,27 @@ export const completeTask = async (req: AuthRequest, res: Response): Promise<voi
     }
 
     const { taskId } = req.params;
-    const { autoRelease } = req.query;
+    if (!taskId) {
+      res.status(400).json({ error: 'Task ID is required' });
+      return;
+    }
 
-    const task = await taskService.completeTask(taskId, req.user.userId, autoRelease === 'true');
+    const { autoRelease } = req.query;
+    const autoReleaseBool = typeof autoRelease === 'string' && (autoRelease === 'true' || autoRelease === '1');
+
+    const task = await taskService.completeTask(taskId, req.user.userId, autoReleaseBool);
+
+    if (!task) {
+      res.status(404).json({ error: 'Task not found after completion' });
+      return;
+    }
 
     res.status(200).json({
       message: 'Task completed successfully',
       task,
     });
   } catch (error) {
+    console.error('Error completing task:', error);
     if (error instanceof Error) {
       res.status(400).json({ error: error.message });
     } else {

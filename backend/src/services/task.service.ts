@@ -273,11 +273,6 @@ export const completeTask = async (taskId: string, userId: string, autoRelease: 
     throw new Error('You do not have permission to complete this task');
   }
 
-  // Check if task has a contract
-  if (!task.contract) {
-    throw new Error('Task does not have an active contract');
-  }
-
   // If helper marks as done, set status to AWAITING_CONFIRMATION
   // If poster confirms, mark as COMPLETED and release payout
   if (isHelper && !autoRelease) {
@@ -287,10 +282,20 @@ export const completeTask = async (taskId: string, userId: string, autoRelease: 
       data: {
         status: TaskStatus.AWAITING_CONFIRMATION,
       },
+      include: {
+        poster: {
+          select: {
+            userId: true,
+            name: true,
+          },
+        },
+        location: true,
+        photos: true,
+      },
     });
 
-    // Set auto-release time if not already set
-    if (!task.contract.autoReleaseAt) {
+    // Set auto-release time if contract exists and not already set
+    if (task.contract && !task.contract.autoReleaseAt) {
       const config = require('../config/env').default;
       await prisma.contract.update({
         where: { contractId: task.contract.contractId },
@@ -303,6 +308,11 @@ export const completeTask = async (taskId: string, userId: string, autoRelease: 
     return updatedTask;
   } else if (isPoster || autoRelease) {
     // Poster confirms or auto-release - mark as COMPLETED and release payout
+    // Check if task has a contract for payout
+    if (!task.contract) {
+      throw new Error('Task does not have an active contract. Cannot release payout.');
+    }
+
     const { releasePayout } = await import('./payment.service');
     
     await prisma.$transaction(async (tx) => {
@@ -325,7 +335,21 @@ export const completeTask = async (taskId: string, userId: string, autoRelease: 
 
     const updatedTask = await prisma.task.findUnique({
       where: { taskId },
+      include: {
+        poster: {
+          select: {
+            userId: true,
+            name: true,
+          },
+        },
+        location: true,
+        photos: true,
+      },
     });
+
+    if (!updatedTask) {
+      throw new Error('Task not found after update');
+    }
 
     return updatedTask;
   }
