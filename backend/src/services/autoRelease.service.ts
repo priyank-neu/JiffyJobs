@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import * as paymentService from './payment.service';
 
 // Helper to check if database is ready
 const checkDatabaseConnection = async (): Promise<boolean> => {
@@ -10,14 +11,21 @@ const checkDatabaseConnection = async (): Promise<boolean> => {
     return false;
   }
 };
-import * as paymentService from './payment.service';
 
 // Check and process auto-releases
 export const processAutoReleases = async (): Promise<void> => {
-  const now = new Date();
+  // Check database connection first
+  const dbReady = await checkDatabaseConnection();
+  if (!dbReady) {
+    console.warn('Database not ready, skipping auto-release check');
+    return;
+  }
 
-  // Find contracts eligible for auto-release
-  const contracts = await prisma.contract.findMany({
+  try {
+    const now = new Date();
+
+    // Find contracts eligible for auto-release
+    const contracts = await prisma.contract.findMany({
     where: {
       autoReleaseAt: {
         lte: now, // Auto-release time has passed
@@ -48,6 +56,13 @@ export const processAutoReleases = async (): Promise<void> => {
       console.error(`Error auto-releasing payout for contract ${contract.contractId}:`, error);
       // Continue with other contracts even if one fails
     }
+  } catch (error: any) {
+    // Handle database errors gracefully (e.g., tables don't exist yet)
+    if (error?.code === 'P2021' || error?.message?.includes('does not exist')) {
+      console.warn('Database tables not ready, skipping auto-release check:', error.message);
+      return;
+    }
+    console.error('Error processing auto-releases:', error);
   }
 };
 
