@@ -264,7 +264,7 @@ export const chatAPI = {
   // Get all threads for the authenticated user
   getThreads: async (): Promise<ChatThread[]> => {
     const response = await api.get('/chat/threads');
-    return response.data;
+    return response.data.threads || response.data || [];
   },
 
   // Get a specific thread

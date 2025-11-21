@@ -86,6 +86,7 @@ const BidForm: React.FC<BidFormProps> = ({ task, onBidPlaced, onCancel }) => {
     } catch (err: any) {
       console.error('Error placing bid:', err);
       setError(
+        err.response?.data?.error || 
         err.response?.data?.message || 
         'Failed to place bid. Please try again.'
       );

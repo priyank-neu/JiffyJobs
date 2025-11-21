@@ -145,6 +145,13 @@ const TaskDetail: React.FC = () => {
       setChatLoading(true);
       // Try to find existing thread
       const threads = await chatAPI.getThreads();
+      
+      // Ensure threads is an array
+      if (!Array.isArray(threads)) {
+        console.warn('getThreads did not return an array:', threads);
+        return;
+      }
+      
       const existingThread = threads.find(
         (t) => t.taskId === taskId && (t.posterId === user.userId || t.helperId === user.userId)
       );
