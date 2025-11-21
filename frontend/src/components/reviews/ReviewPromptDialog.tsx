@@ -97,7 +97,7 @@ const ReviewPromptDialog: React.FC<ReviewPromptDialogProps> = ({
           <Alert severity="error">{error}</Alert>
         ) : !canReview && !existingReview ? (
           <Alert severity="info">
-            {notification.metadata.reason || 'You cannot review this contract at this time.'}
+            {(notification.metadata?.reason as string) || 'You cannot review this contract at this time.'}
           </Alert>
         ) : (
           <ReviewForm

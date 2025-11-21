@@ -6,7 +6,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@mui/material';
 import { reviewAPI } from '@/services/api.service';
-import { ReviewStats, REVIEW_TAG_LABELS } from '@/types/review.types';
+import { ReviewStats, REVIEW_TAG_LABELS, ReviewTag } from '@/types/review.types';
 import ReviewList from '@/components/reviews/ReviewList';
 
 const Dashboard: React.FC = () => {
@@ -26,7 +26,11 @@ const Dashboard: React.FC = () => {
     setLoadingStats(true);
     try {
       const stats = await reviewAPI.getUserReviewStats(user.userId);
-      setReviewStats(stats);
+      // Convert string[] to ReviewTag[] for type safety
+      setReviewStats({
+        ...stats,
+        commonTags: stats.commonTags as ReviewTag[],
+      });
     } catch (error) {
       console.error('Failed to load review stats:', error);
     } finally {

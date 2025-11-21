@@ -17,9 +17,8 @@ import {
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FlagIcon from '@mui/icons-material/Flag';
-import { Review, ReviewTag, REVIEW_TAG_LABELS } from '@/types/review.types';
+import { Review, REVIEW_TAG_LABELS } from '@/types/review.types';
 import { reviewAPI } from '@/services/api.service';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface ReviewListProps {
   userId: string;
@@ -27,7 +26,6 @@ interface ReviewListProps {
 }
 
 const ReviewList: React.FC<ReviewListProps> = ({ userId, showActions = false }) => {
-  const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
