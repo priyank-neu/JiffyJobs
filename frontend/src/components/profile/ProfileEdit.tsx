@@ -18,7 +18,7 @@ import {
   Delete,
 } from '@mui/icons-material';
 import { profileAPI, uploadAPI } from '@/services/api.service';
-import { UserProfile, UpdateProfileData } from '@/types/profile.types';
+import { UpdateProfileData } from '@/types/profile.types';
 
 const ProfileEdit: React.FC = () => {
   const [loading, setLoading] = useState(true);

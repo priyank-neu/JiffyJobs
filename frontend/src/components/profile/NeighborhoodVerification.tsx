@@ -142,7 +142,7 @@ const NeighborhoodVerification: React.FC<NeighborhoodVerificationProps> = ({
           setLoading(false);
         }
       },
-      (err) => {
+      () => {
         setError('Failed to get your current location');
         setLoading(false);
       }
