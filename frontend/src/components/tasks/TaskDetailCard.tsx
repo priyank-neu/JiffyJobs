@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
-import { Task } from '@/types/task.types';
+import { Task, TaskWithDistance } from '@/types/task.types';
 import {
   Description,
   Category,
@@ -129,7 +129,7 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({ task, showSkillMatch =
             </Typography>
           </Box>
         </Box>
-        {showSkillMatch && 'skillMatch' in task && task.skillMatch?.isGoodMatch && (
+        {showSkillMatch && 'skillMatch' in task && (task as TaskWithDistance).skillMatch?.isGoodMatch && (
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <CheckCircle color="success" />

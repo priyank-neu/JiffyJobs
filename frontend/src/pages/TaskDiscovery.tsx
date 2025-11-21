@@ -40,7 +40,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { discoveryAPI } from '@/services/api.service';
-import { Task, TaskCategory, TaskWithDistance, BidSortOptions } from '@/types/task.types';
+import { Task, TaskCategory, TaskWithDistance } from '@/types/task.types';
 import TaskMap from '../components/tasks/TaskMap';
 
 interface DiscoveryFilters {
@@ -477,7 +477,7 @@ const TaskDiscovery: React.FC = () => {
                 </InputLabel>
                 <Select
                   value={filters.sortBy}
-                  onChange={(e) => handleFilterChange({ sortBy: e.target.value as BidSortOptions['field'] })}
+                  onChange={(e) => handleFilterChange({ sortBy: e.target.value as 'proximity' | 'soonest' | 'budget' | 'newest' | 'oldest' | 'title' })}
                   sx={{
                     '& .MuiSelect-select': {
                       paddingRight: '40px',
@@ -627,7 +627,7 @@ const TaskDiscovery: React.FC = () => {
                         size="small"
                         color="primary"
                       />
-                      {'skillMatch' in task && task.skillMatch?.isGoodMatch && (
+                      {'skillMatch' in task && (task as TaskWithDistance).skillMatch?.isGoodMatch && (
                         <Chip
                           label="Good Match"
                           size="small"
@@ -655,9 +655,9 @@ const TaskDiscovery: React.FC = () => {
                       <Typography variant="body2">
                         {task.location ? `${task.location.city}, ${task.location.state}` : (task.addressMasked || 'Location available')}
                       </Typography>
-                      {'distance' in task && task.distance && (
+                      {'distance' in task && (task as TaskWithDistance).distance && (
                         <Typography variant="body2" color="primary">
-                          {formatDistance('distance' in task ? task.distance : 0)}
+                          {formatDistance((task as TaskWithDistance).distance ?? 0)}
                         </Typography>
                       )}
                     </Box>

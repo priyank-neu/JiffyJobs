@@ -13,7 +13,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { taskAPI } from '@/services/api.service';
-import { TaskCategory, Task } from '@/types/task.types';
+import { TaskCategory, Task, UpdateTaskData } from '@/types/task.types';
 
 const categories = [
   { value: TaskCategory.HOME_REPAIR, label: 'Home Repair' },
