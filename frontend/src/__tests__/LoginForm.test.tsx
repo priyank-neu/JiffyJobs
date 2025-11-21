@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from '../contexts/AuthContext';
 import LoginForm from '../components/auth/LoginForm';
 
 // Mock the API service
@@ -15,7 +16,9 @@ describe('LoginForm', () => {
   const renderLoginForm = () => {
     return render(
       <BrowserRouter>
-        <LoginForm />
+        <AuthProvider>
+          <LoginForm />
+        </AuthProvider>
       </BrowserRouter>
     );
   };
