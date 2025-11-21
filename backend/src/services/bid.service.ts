@@ -98,7 +98,7 @@ export const placeBid = async (helperId: string, bidData: CreateBidRequest): Pro
   } catch (error: any) {
     // Handle unique constraint violation (race condition)
     if (error.code === 'P2002' && error.meta?.target?.includes('taskId') && error.meta?.target?.includes('helperId')) {
-      // Check if there's actually a pending bid now
+      // Check if there's actually a bid now (could be from a race condition)
       const currentBid = await prisma.bid.findUnique({
         where: {
           taskId_helperId: {
@@ -107,12 +107,51 @@ export const placeBid = async (helperId: string, bidData: CreateBidRequest): Pro
           }
         }
       });
-      if (currentBid && currentBid.status === PrismaBidStatus.PENDING) {
-        throw new Error('You already have a pending bid on this task');
+      if (currentBid) {
+        if (currentBid.status === PrismaBidStatus.PENDING) {
+          throw new Error('You already have a pending bid on this task');
+        }
+        if (currentBid.status === PrismaBidStatus.ACCEPTED) {
+          throw new Error('You already have an accepted bid on this task');
+        }
+        // If it's REJECTED or WITHDRAWN, delete and retry once
+        if (currentBid.status === PrismaBidStatus.REJECTED || currentBid.status === PrismaBidStatus.WITHDRAWN) {
+          await prisma.bid.delete({
+            where: {
+              taskId_helperId: {
+                taskId,
+                helperId
+              }
+            }
+          });
+          // Retry creating the bid
+          bid = await prisma.bid.create({
+            data: {
+              taskId,
+              helperId,
+              amount,
+              note,
+              status: PrismaBidStatus.PENDING
+            },
+            include: {
+              helper: {
+                select: {
+                  userId: true,
+                  name: true,
+                  email: true
+                }
+              }
+            }
+          });
+        } else {
+          throw new Error('Unable to create bid. Please try again.');
+        }
+      } else {
+        throw new Error('Unable to create bid. Please try again.');
       }
-      throw new Error('Unable to create bid. Please try again.');
+    } else {
+      throw error;
     }
-    throw error;
   }
 
   // Create notification for the poster about new bid
@@ -170,7 +209,7 @@ export const withdrawBid = async (helperId: string, withdrawData: WithdrawBidReq
   // Update bid status to withdrawn
   await prisma.bid.update({
     where: { bidId },
-    data: { status: BidStatus.WITHDRAWN }
+    data: { status: PrismaBidStatus.WITHDRAWN }
   });
 };
 
