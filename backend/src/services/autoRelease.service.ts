@@ -26,35 +26,36 @@ export const processAutoReleases = async (): Promise<void> => {
 
     // Find contracts eligible for auto-release
     const contracts = await prisma.contract.findMany({
-    where: {
-      autoReleaseAt: {
-        lte: now, // Auto-release time has passed
+      where: {
+        autoReleaseAt: {
+          lte: now, // Auto-release time has passed
+        },
+        payoutId: null, // Payout hasn't been released yet
+        paymentStatus: 'COMPLETED', // Payment is completed
       },
-      payoutId: null, // Payout hasn't been released yet
-      paymentStatus: 'COMPLETED', // Payment is completed
-    },
-    include: {
-      task: {
-        select: {
-          status: true,
+      include: {
+        task: {
+          select: {
+            status: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  console.log(`Found ${contracts.length} contracts eligible for auto-release`);
+    console.log(`Found ${contracts.length} contracts eligible for auto-release`);
 
-  for (const contract of contracts) {
-    try {
-      // Only auto-release if task is awaiting confirmation
-      if (contract.task.status === 'AWAITING_CONFIRMATION') {
-        console.log(`Auto-releasing payout for contract ${contract.contractId}`);
-        await paymentService.autoReleasePayout(contract.contractId);
-        console.log(`Successfully auto-released payout for contract ${contract.contractId}`);
+    for (const contract of contracts) {
+      try {
+        // Only auto-release if task is awaiting confirmation
+        if (contract.task.status === 'AWAITING_CONFIRMATION') {
+          console.log(`Auto-releasing payout for contract ${contract.contractId}`);
+          await paymentService.autoReleasePayout(contract.contractId);
+          console.log(`Successfully auto-released payout for contract ${contract.contractId}`);
+        }
+      } catch (error) {
+        console.error(`Error auto-releasing payout for contract ${contract.contractId}:`, error);
+        // Continue with other contracts even if one fails
       }
-    } catch (error) {
-      console.error(`Error auto-releasing payout for contract ${contract.contractId}:`, error);
-      // Continue with other contracts even if one fails
     }
   } catch (error: any) {
     // Handle database errors gracefully (e.g., tables don't exist yet)
@@ -78,4 +79,3 @@ export const startAutoReleaseScheduler = (): void => {
 
   console.log('Auto-release scheduler started');
 };
-
