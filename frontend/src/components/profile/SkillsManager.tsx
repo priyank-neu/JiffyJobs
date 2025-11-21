@@ -20,7 +20,6 @@ import {
 import {
   Add,
   Delete,
-  Star,
 } from '@mui/icons-material';
 import { profileAPI } from '@/services/api.service';
 import { UserProfile } from '@/types/profile.types';
@@ -30,18 +29,6 @@ interface Skill {
   name: string;
   category: string;
   description: string | null;
-}
-
-interface UserSkill {
-  userSkillId: string;
-  skillId: string;
-  level: string;
-  experienceYears: number | null;
-  skill: {
-    skillId: string;
-    name: string;
-    category: string;
-  };
 }
 
 const SkillsManager: React.FC<{ profile: UserProfile | null; onUpdate: () => void }> = ({

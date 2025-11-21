@@ -49,8 +49,8 @@ const ProfileEdit: React.FC = () => {
       setPreferredHourlyRate(
         profileData.preferredHourlyRate ? profileData.preferredHourlyRate.toString() : ''
       );
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load profile');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Failed to load profile');
     } finally {
       setLoading(false);
     }
@@ -100,8 +100,8 @@ const ProfileEdit: React.FC = () => {
         };
         reader.readAsDataURL(file);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to prepare avatar upload');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Failed to prepare avatar upload');
     }
   };
 
@@ -132,8 +132,8 @@ const ProfileEdit: React.FC = () => {
         setSuccess(false);
         fetchProfile();
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update profile');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Failed to update profile');
     } finally {
       setSaving(false);
     }

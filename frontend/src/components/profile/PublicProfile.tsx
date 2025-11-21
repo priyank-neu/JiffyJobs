@@ -17,6 +17,7 @@ import {
 import {
   Verified,
   LocationOn,
+  Star,
 } from '@mui/icons-material';
 import { profileAPI } from '@/services/api.service';
 import { PublicProfile as PublicProfileType } from '@/types/profile.types';
