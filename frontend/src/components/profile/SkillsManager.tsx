@@ -68,7 +68,16 @@ const SkillsManager: React.FC<{ profile: UserProfile | null; onUpdate: () => voi
       const response = await profileAPI.getAllSkills();
       setAvailableSkills(response.skills);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load skills');
+      console.error('Error fetching skills:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to load skills';
+      setError(errorMessage);
+      
+      // If it's an authentication error, redirect to login
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      }
     } finally {
       setLoading(false);
     }
