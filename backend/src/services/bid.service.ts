@@ -14,7 +14,30 @@ import {
 } from '../types';
 import * as paymentService from './payment.service';
 
-// Place a new bid on a task
+/**
+ * Service for bid management operations.
+ * 
+ * @module bid.service
+ * @description Handles all bid-related business logic including placing bids, withdrawing bids,
+ * accepting bids, and bid filtering/sorting.
+ */
+
+/**
+ * Places a new bid on an open task.
+ * 
+ * @param {string} helperId - ID of the helper placing the bid
+ * @param {CreateBidRequest} bidData - Bid data containing taskId, amount, and optional note
+ * @returns {Promise<Bid>} Created bid object with helper information
+ * @throws {Error} If task not found, task not open, helper is poster, or validation fails
+ * 
+ * @example
+ * const bid = await placeBid('helper-id', {
+ *   taskId: 'task-id',
+ *   amount: 50.00,
+ *   note: 'I can complete this task in 2 hours'
+ * });
+ * // Returns bid with status PENDING and sends notification to poster
+ */
 export const placeBid = async (helperId: string, bidData: CreateBidRequest): Promise<Bid> => {
   const { taskId, amount, note } = bidData;
 

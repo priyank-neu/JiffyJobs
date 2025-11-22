@@ -4,6 +4,29 @@ import prisma from '../config/database';
 import { generateToken } from '../utils/jwt.util';
 import { sendVerificationEmail, sendPasswordResetEmail } from './email.service';
 
+/**
+ * Service for user authentication operations including signup, login, email verification, and password management.
+ * 
+ * @module auth.service
+ * @description Handles all authentication-related business logic including user registration,
+ * login, email verification, and password reset functionality.
+ */
+
+/**
+ * Creates a new user account and sends verification email.
+ * 
+ * @param {string} email - User's email address (must be unique)
+ * @param {string} password - User's password (will be hashed before storage)
+ * @param {string} [name] - Optional user's display name
+ * @param {string} [phoneNumber] - Optional user's phone number
+ * @returns {Promise<{token: string, user: {userId: string, email: string, name: string | null, isVerified: boolean, role: string}}>}
+ *   Object containing JWT token and user information (without sensitive data)
+ * @throws {Error} If email already exists
+ * 
+ * @example
+ * const result = await signup('user@example.com', 'password123', 'John Doe');
+ * // Returns: { token: 'jwt-token...', user: { userId: '...', email: '...', ... } }
+ */
 export const signup = async (
   email: string,
   password: string,
@@ -68,6 +91,19 @@ export const signup = async (
   };
 };
 
+/**
+ * Authenticates a user with email and password.
+ * 
+ * @param {string} email - User's email address
+ * @param {string} password - User's password (plain text)
+ * @returns {Promise<{token: string, user: {userId: string, email: string, name: string | null, isVerified: boolean, role: string}}>}
+ *   Object containing JWT token and user information
+ * @throws {Error} If credentials are invalid or account is not active
+ * 
+ * @example
+ * const result = await login('user@example.com', 'password123');
+ * // Returns: { token: 'jwt-token...', user: { userId: '...', email: '...', ... } }
+ */
 export const login = async (email: string, password: string) => {
   // Find user
   const user = await prisma.user.findUnique({
@@ -108,6 +144,17 @@ export const login = async (email: string, password: string) => {
   };
 };
 
+/**
+ * Verifies a user's email address using a verification token.
+ * 
+ * @param {string} token - Email verification token (from verification email)
+ * @returns {Promise<{message: string}>} Success message
+ * @throws {Error} If token is invalid, expired, or already used
+ * 
+ * @example
+ * await verifyEmail('verification-token-from-email');
+ * // Updates user.isVerified to true and marks token as used
+ */
 export const verifyEmail = async (token: string) => {
   const verification = await prisma.verification.findUnique({
     where: { token },
@@ -141,6 +188,16 @@ export const verifyEmail = async (token: string) => {
   return { message: 'Email verified successfully' };
 };
 
+/**
+ * Initiates password reset process by sending reset email.
+ * 
+ * @param {string} email - User's email address
+ * @returns {Promise<{message: string}>} Generic message (doesn't reveal if email exists)
+ * 
+ * @example
+ * await forgotPassword('user@example.com');
+ * // Creates reset token and sends password reset email
+ */
 export const forgotPassword = async (email: string) => {
   const user = await prisma.user.findUnique({
     where: { email },
@@ -170,6 +227,18 @@ export const forgotPassword = async (email: string) => {
   return { message: 'If an account exists, a password reset email has been sent' };
 };
 
+/**
+ * Resets user password using a reset token.
+ * 
+ * @param {string} token - Password reset token (from reset email)
+ * @param {string} newPassword - New password (will be hashed before storage)
+ * @returns {Promise<{message: string}>} Success message
+ * @throws {Error} If token is invalid, expired, or already used
+ * 
+ * @example
+ * await resetPassword('reset-token-from-email', 'newSecurePassword123');
+ * // Updates user password and marks token as used
+ */
 export const resetPassword = async (token: string, newPassword: string) => {
   const passwordReset = await prisma.passwordReset.findUnique({
     where: { token },

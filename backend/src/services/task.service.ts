@@ -3,7 +3,33 @@ import { TaskStatus, NotificationType } from '@prisma/client';
 import { CreateTaskDTO, UpdateTaskDTO, TaskFilter } from '../types/task.types';
 import { createLocation, maskAddress } from './location.service';
 import { createNotification } from './notification.service';
- 
+
+/**
+ * Service for task management operations.
+ * 
+ * @module task.service
+ * @description Handles all task-related business logic including task creation, retrieval,
+ * updates, cancellation, and filtering.
+ */
+
+/**
+ * Creates a new task with location and optional photos.
+ * 
+ * @param {string} posterId - ID of the user creating the task
+ * @param {CreateTaskDTO} taskData - Task data including title, description, category, budget, location, etc.
+ * @returns {Promise<Task>} Created task object with poster and location information
+ * @throws {Error} If validation fails (e.g., budget range invalid, past date)
+ * 
+ * @example
+ * const task = await createTask('user-id', {
+ *   title: 'Clean apartment',
+ *   description: 'Need help cleaning 2-bedroom apartment',
+ *   category: 'CLEANING',
+ *   budget: 100.00,
+ *   location: { latitude: 42.3, longitude: -71.0, address: '123 Main St', ... }
+ * });
+ * // Creates task with status OPEN and creates location record
+ */
 export const createTask = async (posterId: string, taskData: CreateTaskDTO) => {
   // Validation
   if (taskData.budgetMin && taskData.budgetMax && taskData.budgetMin > taskData.budgetMax) {

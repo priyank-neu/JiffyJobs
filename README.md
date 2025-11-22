@@ -164,6 +164,23 @@ npm run build
 npm run preview
 ```
 
+## API Documentation
+
+Automatically generated API documentation is available in the `/docs` directory.
+
+**View Documentation:**
+- **Local:** Run `cd backend && npm run docs:serve` and open `http://localhost:8080`
+- **Repository:** View at `/docs/index.html` in the repository
+- **GitHub Pages:** Available at `https://<username>.github.io/JiffyJobs/docs/` (if enabled)
+
+**Generate Documentation:**
+```bash
+cd backend
+npm run docs:generate
+```
+
+The documentation is generated using **TypeDoc** from JSDoc comments in the source code. See [docs/README.md](./docs/README.md) for more details.
+
 ## Testing
 
 ### Backend Tests

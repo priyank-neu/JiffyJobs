@@ -1,0 +1,32 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/**/*.ts"],
+  "out": "docs",
+  "exclude": [
+    "**/*.test.ts",
+    "**/__tests__/**",
+    "**/*.d.ts",
+    "src/config/**",
+    "src/__tests__/**",
+    "node_modules/**"
+  ],
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": false,
+  "name": "JiffyJobs API Documentation",
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Authentication",
+    "Tasks",
+    "Bids",
+    "Payments",
+    "Reports",
+    "Moderation",
+    "Profile",
+    "Chat",
+    "Reviews",
+    "*"
+  ]
+}
+

@@ -3,6 +3,28 @@ import * as authService from '../services/auth.service';
 import { isValidEmail, isValidPassword, sanitizeEmail } from '../utils/validation.util';
 import config from '../config/env';
 
+/**
+ * Controller for authentication endpoints.
+ * 
+ * @module auth.controller
+ * @description Handles HTTP requests for user authentication, signup, login, email verification,
+ * and password reset operations.
+ */
+
+/**
+ * Handles user registration (signup) request.
+ * 
+ * Route: POST /api/auth/signup
+ * 
+ * @param {Request} req - Express request object containing email, password, name (optional), phoneNumber (optional)
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} Sends JSON response with token and user data, or error message
+ * 
+ * @example
+ * POST /api/auth/signup
+ * Body: { email: 'user@example.com', password: 'SecurePass123', name: 'John Doe' }
+ * Response: { message: 'User created successfully...', user: {...}, token: '...' }
+ */
 export const signup = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, name, phoneNumber } = req.body;
@@ -57,6 +79,20 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Handles user login request.
+ * 
+ * Route: POST /api/auth/login
+ * 
+ * @param {Request} req - Express request object containing email and password
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} Sends JSON response with token and user data, or error message
+ * 
+ * @example
+ * POST /api/auth/login
+ * Body: { email: 'user@example.com', password: 'SecurePass123' }
+ * Response: { message: 'Login successful', user: {...}, token: '...' }
+ */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
