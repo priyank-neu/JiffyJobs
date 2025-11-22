@@ -4,16 +4,23 @@ This directory contains automatically generated API documentation for the JiffyJ
 
 ## Viewing the Documentation
 
-1. **Local Viewing:**
+1. **GitHub Pages (Recommended):**
+   - After enabling GitHub Pages, documentation will be available at:
+   - `https://priyank-neu.github.io/JiffyJobs/`
+   - Or via the repository settings > Pages
+
+2. **Local Viewing:**
    ```bash
    cd backend
    npm run docs:serve
    # Open http://localhost:8080 in your browser
    ```
 
-2. **GitHub Pages:**
-   - Documentation is hosted at: `https://<username>.github.io/JiffyJobs/docs/`
-   - Or view directly in repository at: `/docs/index.html`
+3. **Raw HTML (GitHub File Viewer):**
+   - GitHub displays HTML as raw code, not rendered
+   - Click "Raw" button and copy the URL, then use:
+   - `https://htmlpreview.github.io/?<raw-url>`
+   - Or use: `https://raw.githack.com/priyank-neu/JiffyJobs/feature/api-documentation/docs/index.html`
 
 ## Documentation Structure
 
