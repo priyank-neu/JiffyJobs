@@ -3,15 +3,12 @@ import { Container, Typography, Box, Paper, Alert, Rating, Chip } from '@mui/mat
 import { useAuth } from '@/contexts/AuthContext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@mui/material';
 import { reviewAPI } from '@/services/api.service';
 import { ReviewStats, REVIEW_TAG_LABELS, ReviewTag } from '@/types/review.types';
 import ReviewList from '@/components/reviews/ReviewList';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -140,36 +137,6 @@ const Dashboard: React.FC = () => {
           )}
         </Paper>
       )}
-
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Getting Started
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-          🎉 Your account has been created successfully!
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          Epic 1: User Authentication - Complete ✅
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          Epic 2: Task Posting - In Progress 🚧
-        </Typography>
-
-        <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/tasks/create')}
-          >
-            Post a Task
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/my-tasks')}
-          >
-            View My Tasks
-          </Button>
-        </Box>
-      </Paper>
     </Container>
   );
 };
