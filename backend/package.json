@@ -12,6 +12,7 @@
     "prisma:studio": "dotenv -e .env -- prisma studio",
     "create-test-users": "ts-node scripts/create-test-users.ts",
     "create-admin": "ts-node scripts/create-admin.ts",
+    "create-admin-local": "ts-node scripts/create-admin-local.ts",
     "seed-skills": "ts-node scripts/seed-skills.ts",
     "test": "jest",
     "test:watch": "jest --watch",
